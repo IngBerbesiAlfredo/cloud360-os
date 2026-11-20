@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud360 OS - Ingeniería & Servicios Tecnológicos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0b1329; }
+        ::-webkit-scrollbar-thumb { background: #1e2d5a; border-radius: 3px; }
+        @media print {
+            body * { visibility: hidden; }
+            #printableInvoice, #printableInvoice * { visibility: visible; }
+            #printableInvoice { position: absolute; left: 0; top: 0; width: 100%; background: white !important; color: black !important; padding: 15px; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-[#0b1329] text-slate-100 min-h-screen flex flex-col md:flex-row antialiased">
+
+    <!-- SIDEBAR PÚBLICO -->
+    <aside class="w-full md:w-64 bg-[#131e3a] border-r border-[#1e2d5a] p-5 flex flex-col justify-between shrink-0 shadow-xl">
+        <div class="space-y-6">
+            <div class="flex items-center space-x-3 pb-4 border-b border-[#1e2d5a]">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-slate-900 to-sky-600 p-1 flex items-center justify-center border border-sky-500/40">
+                    <img src="logo.png" onerror="this.onerror=null; this.src='https://placehold.co/80x80/131e3a/06b6d4?text=Cloud360';" alt="Logo" class="w-full h-full object-contain rounded-lg">
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg text-white tracking-tight">Cloud<span class="text-sky-400">360</span></h1>
+                    <p class="text-[9px] text-sky-400 font-semibold uppercase">Ing. Luis A. Mendoza B.</p>
+                </div>
+            </div>
+
+            <nav class="space-y-1.5 text-sm">
+                <button onclick="switchTab('catalog')" id="nav-catalog" class="w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl font-medium bg-sky-600 text-white shadow">
+                    <i class="fa-solid fa-cubes w-5 text-center"></i> Catálogo
+                </button>
+                <button onclick="switchTab('tracking')" id="nav-tracking" class="w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl font-medium text-slate-400 hover:bg-slate-800/60 hover:text-slate-200">
+                    <i class="fa-solid fa-magnifying-glass w-5 text-center text-amber-400"></i> Rastrear Órden
+                </button>
+                <button onclick="openWhatsAppGeneral()" class="w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl font-medium text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 text-left">
+                    <i class="fa-brands fa-whatsapp w-5 text-center text-emerald-400"></i> Cotizador WA
+                </button>
+            </nav>
+        </div>
+
+        <div class="pt-4 border-t border-[#1e2d5a] text-xs space-y-2">
+            <div class="bg-slate-900 p-2.5 rounded-xl border border-[#1e2d5a] font-mono text-[11px]">
+                <div class="flex justify-between text-slate-300"><span>BCV:</span><strong class="text-emerald-400" id="bcv-display">36.50 VES</strong></div>
+                <div class="flex justify-between text-slate-300"><span>COP:</span><strong class="text-sky-400" id="cop-display">4,100 COP</strong></div>
+            </div>
+            <div id="admin-action-btn" class="hidden">
+                <button onclick="openOrderModal()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 px-3 rounded-xl text-xs shadow flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-plus"></i> Nueva Órden / Factura
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- CONTENIDO -->
+    <main class="flex-1 p-4 md:p-8 overflow-y-auto max-w-7xl mx-auto space-y-6">
+
+        <!-- CATÁLOGO -->
+        <section id="tab-catalog" class="tab-section space-y-6">
+            <div class="bg-gradient-to-r from-[#131e3a] to-slate-900 border border-[#1e2d5a] rounded-3xl p-6 md:p-8 shadow-xl">
+                <span class="text-xs bg-sky-500/20 text-sky-400 border border-sky-500/30 px-3 py-1 rounded-full font-bold">Soporte y Mantenimiento Especializado</span>
+                <h2 class="text-3xl font-extrabold text-white mt-3">Soluciones Tecnológicas en <span class="text-sky-400">Energía, CCTV & Redes</span></h2>
+                <p class="text-slate-300 text-sm mt-2">Bienvenido a Cloud360 OS. Selecciona un servicio o realiza el seguimiento en vivo de tu equipo en taller.</p>
+            </div>
+
+            <div>
+                <h3 class="text-lg font-bold text-white mb-4">Servicios Disponibles</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="catalogGrid"></div>
+            </div>
+        </section>
+
+        <!-- RASTREO -->
+        <section id="tab-tracking" class="tab-section hidden space-y-6">
+            <div class="bg-[#131e3a] border border-[#1e2d5a] rounded-3xl p-6 md:p-10 text-center max-w-xl mx-auto space-y-4 shadow-xl">
+                <h2 class="text-2xl font-bold text-white">Consulta de Estatus en Taller</h2>
+                <p class="text-xs text-slate-400">Introduce el número de ticket (ej. ORD-1001) o cédula.</p>
+                <div class="flex gap-2">
+                    <input type="text" id="trackInput" placeholder="Nº de Ticket o Cédula..." class="flex-1 bg-slate-900 border border-[#1e2d5a] rounded-xl px-4 py-3 text-sm text-white font-mono">
+                    <button onclick="trackOrder()" class="bg-sky-600 hover:bg-sky-500 text-white font-bold px-5 py-3 rounded-xl text-sm">Buscar</button>
+                </div>
+                <div id="trackResult" class="hidden text-left bg-slate-900 border border-[#1e2d5a] p-4 rounded-xl space-y-2 text-xs"></div>
+            </div>
+        </section>
+
+        <!-- PANEL ADMIN (OCULTO HASTA USAR ?admin=true) -->
+        <section id="tab-admin" class="tab-section hidden space-y-6">
+            <div class="flex justify-between items-center bg-[#131e3a] border border-[#1e2d5a] p-4 rounded-2xl">
+                <div>
+                    <h2 class="text-xl font-bold text-white">Panel de Gestión - Taller (FastAPI + MongoDB)</h2>
+                    <p class="text-xs text-slate-400">Control de órdenes, inventario y facturación interna.</p>
+                </div>
+                <button onclick="openOrderModal()" class="bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow"><i class="fa-solid fa-plus"></i> Registrar Órden</button>
+            </div>
+            <div class="bg-[#131e3a] border border-[#1e2d5a] rounded-2xl overflow-x-auto shadow">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-slate-900 text-slate-400 text-xs uppercase border-b border-[#1e2d5a]">
+                        <tr>
+                            <th class="p-3">Ticket</th>
+                            <th class="p-3">Cliente</th>
+                            <th class="p-3">Desglose / Partes</th>
+                            <th class="p-3">Total / Abono</th>
+                            <th class="p-3">Saldo</th>
+                            <th class="p-3 text-right">Comprobante</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ordersTable" class="divide-y divide-[#1e2d5a]"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- MODAL ORDEN CON DESGLOSE DE REPUESTOS -->
+    <div id="orderModal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-[#131e3a] border border-[#1e2d5a] w-full max-w-lg rounded-2xl p-6 space-y-4 my-8">
+            <div class="flex justify-between items-center border-b border-[#1e2d5a] pb-3">
+                <h3 class="font-bold text-white text-sm">Registrar Órden / Nota de Entrega</h3>
+                <button onclick="closeOrderModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3">
+                <div><label class="text-xs text-slate-400">Cliente</label><input type="text" id="ord-client" placeholder="Nombre" class="w-full mt-1 bg-slate-900 border border-[#1e2d5a] rounded-xl p-2.5 text-xs text-white"></div>
+                <div><label class="text-xs text-slate-400">Cédula / RIF</label><input type="text" id="ord-ci" placeholder="V-12345678" class="w-full mt-1 bg-slate-900 border border-[#1e2d5a] rounded-xl p-2.5 text-xs text-white"></div>
+                <div><label class="text-xs text-slate-400">Teléfono WhatsApp</label><input type="text" id="ord-phone" placeholder="0414..." class="w-full mt-1 bg-slate-900 border border-[#1e2d5a] rounded-xl p-2.5 text-xs text-white"></div>
+                <div><label class="text-xs text-slate-400">Correo Electrónico</label><input type="email" id="ord-email" placeholder="correo@ejemplo.com" class="w-full mt-1 bg-slate-900 border border-[#1e2d5a] rounded-xl p-2.5 text-xs text-white"></div>
+            </div>
+
+            <!-- REPUESTO DE BODEGA -->
+            <div class="bg-slate-900 p-3 rounded-xl border border-[#1e2d5a] space-y-2">
+                <span class="text-[11px] font-bold text-sky-400 block">1. Repuesto de Bodega (Descuenta Stock)</span>
+                <div class="flex gap-2">
+                    <select id="ord-inv-select" class="flex-1 bg-slate-800 border border-[#1e2d5a] rounded-xl p-2 text-xs text-white">
+                        <option value="">-- Seleccionar stock --</option>
+                        <option value="SSD 480GB Kingston|35">SSD 480GB ($35)</option>
+                        <option value="Memoria RAM 8GB|28">RAM 8GB ($28)</option>
+                    </select>
+                    <button onclick="addStockItem()" class="bg-sky-600 px-3 py-1.5 rounded-xl text-xs font-semibold text-white">Añadir</button>
+                </div>
+            </div>
+
+            <!-- REPUESTO DEL CLIENTE -->
+            <div class="bg-slate-900 p-3 rounded-xl border border-[#1e2d5a] space-y-2">
+                <span class="text-[11px] font-bold text-amber-400 block">2. O Instalar Repuesto Traído por el Cliente</span>
+                <div class="grid grid-cols-3 gap-2">
+                    <input type="text" id="custom-part" placeholder="Descripción pieza" class="col-span-2 bg-slate-800 border border-[#1e2d5a] rounded-xl p-2 text-xs text-white">
+                    <input type="number" id="custom-price" placeholder="Instalación ($)" class="bg-slate-800 border border-[#1e2d5a] rounded-xl p-2 text-xs text-white">
+                </div>
+                <button onclick="addCustomItem()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 py-1.5 rounded-xl text-xs">Agregar al Desglose</button>
+            </div>
+
+            <div class="bg-slate-950 p-3 rounded-xl border border-[#1e2d5a] text-xs space-y-1">
+                <span class="text-[10px] text-slate-400 uppercase font-bold block">Desglose de Cobro:</span>
+                <div id="items-list-box" class="space-y-1 text-slate-300">Ningún item agregado.</div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div><label class="text-xs text-slate-400">Total ($)</label><input type="number" step="0.01" id="ord-total" readonly class="w-full mt-1 bg-slate-900 border border-[#1e2d5a] rounded-xl p-2.5 text-xs text-emerald-400 font-bold"></div>
+                <div><label class="text-xs text-slate-400">Abono / Anticipo ($)</label><input type="number" step="0.01" id="ord-advance" placeholder="0.00" class="w-full mt-1 bg-slate-900 border border-[#1e2d5a] rounded-xl p-2.5 text-xs text-white"></div>
+            </div>
+
+            <div><label class="text-xs text-slate-400">Estatus</label><select id="ord-status" class="w-full mt-1 bg-slate-900 border border-[#1e2d5a] rounded-xl p-2.5 text-xs text-white"><option value="En Diagnóstico">En Diagnóstico</option><option value="En Progreso">En Progreso</option><option value="Listo para Entregar">Listo para Entregar</option><option value="Entregado">Entregado</option></select></div>
+
+            <div class="flex justify-end gap-2 pt-2 border-t border-[#1e2d5a]">
+                <button onclick="closeOrderModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs">Cancelar</button>
+                <button onclick="saveOrder()" class="px-5 py-2 bg-sky-600 text-white rounded-xl text-xs font-bold">Guardar y Notificar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- COMPROBANTE / FACTURA NO FISCAL CON QR GRANDE -->
+    <div id="printableInvoice" class="hidden">
+        <div style="width: 380px; padding: 15px; font-family: 'Courier New', monospace; background: #fff; color: #000; font-size: 11px; line-height: 1.3;">
+            <div style="text-align: center; border-bottom: 2px dashed #000; padding-bottom: 8px; margin-bottom: 8px;">
+                <h2 style="margin: 0; font-size: 16px; font-weight: bold;">CLOUD360 OS</h2>
+                <p style="margin: 2px 0; font-weight: bold;">Ing. Luis Alfredo Mendoza Berbesi</p>
+                <p style="margin: 2px 0; font-weight: bold;">RIF: V-26069673-0</p>
+                <p style="margin: 2px 0; font-size: 10px;">Cúcuta, Colombia / Táchira, Venezuela</p>
+            </div>
+            <div style="margin-bottom: 8px; border-bottom: 1px dashed #000; padding-bottom: 6px;">
+                <p style="margin: 2px 0;"><strong>Ticket:</strong> <span id="p-ticket">ORD-1001</span></p>
+                <p style="margin: 2px 0;"><strong>Cliente:</strong> <span id="p-client">--</span></p>
+                <p style="margin: 2px 0;"><strong>Cédula/RIF:</strong> <span id="p-ci">--</span></p>
+            </div>
+            <div style="margin-bottom: 8px; border-bottom: 1px dashed #000; padding-bottom: 6px;">
+                <p style="margin: 2px 0; font-weight: bold;">DESGLOSE DE SERVICIO:</p>
+                <div id="p-items" style="margin: 4px 0;"></div>
+            </div>
+            <div style="margin-bottom: 8px; border-bottom: 2px dashed #000; padding-bottom: 6px;">
+                <table style="width: 100%; font-size: 11px;">
+                    <tr><td>Total:</td><td style="text-align: right;" id="p-total">$0.00</td></tr>
+                    <tr><td>Anticipo:</td><td style="text-align: right;" id="p-adv">$0.00</td></tr>
+                    <tr style="font-weight: bold; font-size: 13px;"><td>SALDO PENDIENTE:</td><td style="text-align: right; color: red;" id="p-bal">$0.00</td></tr>
+                </table>
+            </div>
+            <div style="text-align: center; margin-top: 12px;">
+                <div id="print-qrcode" style="display:inline-block; margin-bottom: 5px;"></div>
+                <p style="margin: 4px 0; font-weight: bold; font-size: 10px;">Comprobante de Recepción, Seguimiento & Control Interno de Trabajo — Documento NO FISCAL</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let orders = [];
+        let currentItems = [];
+        let services = [
+            { title: "Repotenciación Express con SSD", category: "Hardware PC", desc: "Migración de SO y disco.", price: "$35 - $75" },
+            { title: "Mantenimiento Preventivo Inversores", category: "Energía", desc: "Diagnóstico de celdas y limpieza.", price: "$40 - $70" },
+            { title: "Instalación de Cámaras CCTV HD/IP", category: "Seguridad", desc: "Montaje y configuración app.", price: "$80 - $150" }
+        ];
+
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('admin') === 'true') {
+                document.getElementById('admin-action-btn').classList.remove('hidden');
+                switchTab('admin');
+                loadOrdersFromServer();
+            } else {
+                renderCatalog();
+            }
+        };
+
+        function switchTab(id) {
+            document.querySelectorAll('.tab-section').forEach(el => el.classList.add('hidden'));
+            document.getElementById('tab-' + id).classList.remove('hidden');
+        }
+
+        function renderCatalog() {
+            let grid = document.getElementById('catalogGrid');
+            grid.innerHTML = '';
+            services.forEach(s => {
+                grid.innerHTML += `
+                    <div class="bg-[#131e3a] border border-[#1e2d5a] rounded-2xl p-5 flex flex-col justify-between shadow">
+                        <div>
+                            <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-slate-900 text-sky-400">${s.category}</span>
+                            <h4 class="font-bold text-white text-base mt-2">${s.title}</h4>
+                            <p class="text-xs text-slate-400 mt-1">${s.desc}</p>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-[#1e2d5a] flex justify-between items-center text-xs">
+                            <strong class="text-sky-400">${s.price}</strong>
+                            <button onclick="openWhatsAppGeneral('${s.title}')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-xl font-bold"><i class="fa-brands fa-whatsapp"></i> Cotizar</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function openOrderModal() {
+            currentItems = [];
+            document.getElementById('ord-client').value = '';
+            document.getElementById('ord-ci').value = '';
+            document.getElementById('ord-phone').value = '';
+            document.getElementById('ord-email').value = '';
+            document.getElementById('ord-advance').value = '';
+            updateItemsBox();
+            document.getElementById('orderModal').classList.remove('hidden');
+        }
+
+        function closeOrderModal() { document.getElementById('orderModal').classList.add('hidden'); }
+
+        function addStockItem() {
+            let val = document.getElementById('ord-inv-select').value;
+            if(!val) return;
+            let [name, price] = val.split('|');
+            currentItems.push({ name: name + " (Bodega)", price: parseFloat(price) });
+            updateItemsBox();
+        }
+
+        function addCustomItem() {
+            let name = document.getElementById('custom-part').value.trim();
+            let price = parseFloat(document.getElementById('custom-price').value) || 0;
+            if(!name) return;
+            currentItems.push({ name: name + " (Instalación Cliente)", price: price });
+            document.getElementById('custom-part').value = '';
+            document.getElementById('custom-price').value = '';
+            updateItemsBox();
+        }
+
+        function updateItemsBox() {
+            let box = document.getElementById('items-list-box');
+            let totalBox = document.getElementById('ord-total');
+            if(currentItems.length === 0) { box.innerHTML = "Ningún item agregado."; totalBox.value = "0.00"; return; }
+            let html = ""; let total = 0;
+            currentItems.forEach((i, idx) => {
+                total += i.price;
+                html += `<div class="flex justify-between items-center bg-slate-900 p-1.5 rounded"><span>${i.name}</span><span>$${i.price.toFixed(2)} <button onclick="currentItems.splice(${idx},1);updateItemsBox();" class="text-red-400 ml-1">×</button></span></div>`;
+            });
+            box.innerHTML = html;
+            totalBox.value = total.toFixed(2);
+        }
+
+        async function saveOrder() {
+            let client = document.getElementById('ord-client').value || "Cliente";
+            let ci = document.getElementById('ord-ci').value || "V-00000";
+            let phone = document.getElementById('ord-phone').value || "";
+            let email = document.getElementById('ord-email').value || "";
+            let total = parseFloat(document.getElementById('ord-total').value) || 0;
+            let advance = parseFloat(document.getElementById('ord-advance').value) || 0;
+            let status = document.getElementById('ord-status').value;
+
+            if(currentItems.length === 0) { alert("Agregue al menos un repuesto o servicio."); return; }
+
+            let newOrder = {
+                id: "ORD-" + Math.floor(1000 + Math.random() * 9000),
+                client, ci, phone, email, category: "Soporte Taller", priority: "Normal",
+                description: currentItems.map(i => i.name).join(", "),
+                status, cost: total, advance, currency: "USD", items: currentItems
+            };
+
+            try {
+                let res = await fetch('/api/orders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newOrder)
+                });
+                let data = await res.json();
+                alert("Órden registrada en MongoDB y notificación enviada.");
+                closeOrderModal();
+                loadOrdersFromServer();
+            } catch(e) {
+                alert("Guardado localmente (Simulación offline).");
+                orders.push(newOrder);
+                closeOrderModal();
+                renderOrdersTable();
+            }
+        }
+
+        async function loadOrdersFromServer() {
+            try {
+                let res = await fetch('/api/orders');
+                orders = await res.json();
+                renderOrdersTable();
+            } catch(e) {
+                renderOrdersTable();
+            }
+        }
+
+        function renderOrdersTable() {
+            let tbody = document.getElementById('ordersTable');
+            tbody.innerHTML = '';
+            if(orders.length === 0) { tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-500">Sin órdenes en MongoDB.</td></tr>`; return; }
+            orders.forEach((o, idx) => {
+                let bal = Math.max(0, o.cost - (o.advance || 0));
+                tbody.innerHTML += `
+                    <tr class="border-b border-[#1e2d5a]">
+                        <td class="p-3 font-mono font-bold text-sky-400">${o.id}</td>
+                        <td class="p-3"><strong>${o.client}</strong><br><span class="text-xs text-slate-400">${o.ci}</span></td>
+                        <td class="p-3 text-xs text-slate-300">${o.description}</td>
+                        <td class="p-3"><strong>$${o.cost.toFixed(2)}</strong><br><span class="text-emerald-400">Ab: $${(o.advance||0).toFixed(2)}</span></td>
+                        <td class="p-3 font-bold text-red-400">$${bal.toFixed(2)}</td>
+                        <td class="p-3 text-right"><button onclick="printInvoiceLocal(${idx})" class="bg-sky-600/20 text-sky-300 px-3 py-1.5 rounded-xl text-xs"><i class="fa-solid fa-file-pdf"></i> PDF</button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        function printInvoiceLocal(idx) {
+            let o = orders[idx];
+            let bal = Math.max(0, o.cost - (o.advance || 0));
+            document.getElementById('p-ticket').innerText = o.id;
+            document.getElementById('p-client').innerText = o.client;
+            document.getElementById('p-ci').innerText = o.ci;
+            document.getElementById('p-total').innerText = "$" + o.cost.toFixed(2);
+            document.getElementById('p-adv').innerText = "$" + (o.advance || 0).toFixed(2);
+            document.getElementById('p-bal').innerText = "$" + bal.toFixed(2);
+            document.getElementById('p-items').innerHTML = o.items.map(i => `<div>- ${i.name}: $${i.price.toFixed(2)}</div>`).join("");
+
+            document.getElementById('print-qrcode').innerHTML = "";
+            let el = document.getElementById('printableInvoice');
+            el.classList.remove('hidden');
+            
+            new QRCode(document.getElementById('print-qrcode'), { 
+                text: `${window.location.origin}/?order=${o.id}`, 
+                width: 90, 
+                height: 90 
+            });
+
+            setTimeout(() => {
+                html2pdf().from(el).set({ margin: 5, filename: `Comprobante_${o.id}.pdf` }).save().then(() => el.classList.add('hidden'));
+            }, 300);
+        }
+
+        async function trackOrder() {
+            let val = document.getElementById('trackInput').value.trim();
+            let box = document.getElementById('trackResult');
+            box.classList.remove('hidden');
+            try {
+                let res = await fetch(`/api/track/${val}`);
+                let data = await res.json();
+                if(data.found) {
+                    let o = data.order;
+                    let bal = Math.max(0, o.cost - (o.advance || 0));
+                    box.innerHTML = `<strong>Ticket: ${o.id}</strong><br>Cliente: ${o.client}<br>Estatus: <span class="text-emerald-400">${o.status}</span><br>Saldo Pendiente: <span class="text-red-400 font-bold">$${bal.toFixed(2)}</span>`;
+                } else {
+                    box.innerHTML = "No se encontró ningún registro en MongoDB.";
+                }
+            } catch(e) {
+                box.innerHTML = "Error al conectar con el servidor.";
+            }
+        }
+
+        function openWhatsAppGeneral(service = '') {
+            let msg = service ? `Hola Ing. Luis Alfredo (Cloud360), deseo cotizar: *${service}*.` : `Hola Ing. Luis Alfredo (Cloud360), deseo soporte técnico.`;
+            window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+    </script>
+</body>
+</html>
