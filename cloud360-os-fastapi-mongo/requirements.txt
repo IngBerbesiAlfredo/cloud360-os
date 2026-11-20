@@ -1,7 +1,0 @@
-fastapi
-pydantic
-requests
-motor
-pymongo
-supabase
-uvicorn
