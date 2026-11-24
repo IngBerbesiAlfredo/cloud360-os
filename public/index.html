@@ -12,7 +12,7 @@
   <style>
     html, body { max-width: 100vw; overflow-x: hidden; }
     body { font-family: 'Inter', system-ui, sans-serif; background-color: #020617; color: #f8fafc; }
-    .glass-panel { background: rgba(15, 23, 42, 0.88); backdrop-filter: blur(14px); border: 1px solid rgba(56, 189, 48, 0.16); }
+    .glass-panel { background: rgba(15, 23, 42, 0.88); backdrop-filter: blur(14px); border: 1px solid rgba(56, 189, 248, 0.16); }
     .dropdown-menu { display: none; }
     .dropdown:hover .dropdown-menu, .dropdown.open .dropdown-menu { display: block; }
     .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -180,7 +180,7 @@
             <span class="text-xs font-bold text-sky-300"><i class="fa-solid fa-qrcode mr-1"></i> Cámara Activa o Simulación Rápida</span>
             <button type="button" onclick="stopPublicScanner()" class="text-xs text-rose-400 hover:underline cursor-pointer">Cerrar cámara</button>
           </div>
-          <video id="publicVideoPreview" class="w-full max-h-60 rounded-xl bg-black object-cover hidden" playsinline></video>
+          <video id="publicVideoPreview" class="w-full max-h-60 rounded-xl bg-black object-cover hidden" playsinline autoplay muted></video>
           <p id="scannerStatusMsg" class="text-xs text-slate-400">Apunta al código QR o código de barras de tu factura, o prueba una simulación instantánea:</p>
           <div class="flex flex-wrap gap-2">
             <button type="button" onclick="simulateBarcodeScan('ORD-9464')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-emerald-300 border border-emerald-500/30 cursor-pointer">Simular Escaneo ORD-9464</button>
@@ -334,7 +334,7 @@
         </div>
 
         <div id="invScannerBox" class="hidden p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
-          <video id="invVideoPreview" class="w-full max-h-52 rounded-lg bg-black object-cover hidden" playsinline></video>
+          <video id="invVideoPreview" class="w-full max-h-52 rounded-lg bg-black object-cover hidden" playsinline autoplay muted></video>
           <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
             <span class="text-slate-400">Simular lectura láser:</span>
             <div class="flex gap-2">
@@ -965,6 +965,8 @@
     let activeVisitId = null;
     let publicMediaStream = null;
     let invMediaStream = null;
+    let publicBarcodeTimer = null;
+    let invBarcodeTimer = null;
     let editingInvId = null;
     let newInvUploadedDataUrl = '';
 
@@ -1007,7 +1009,6 @@
       if (adminCop) adminCop.value = state.copRate;
     }
 
-    // CONEXIÓN REAL CON BACKEND EN RENDER + FALLBACK DIRECTO A BCV/COP
     async function fetchLiveBcvRate(notifyUser = false) {
       const icon = document.getElementById('bcvSyncIcon');
       if (icon) icon.classList.add('fa-spin');
@@ -1152,7 +1153,6 @@
       showToast('Tasas actualizadas en todo el sistema');
     }
 
-    // MODO PÚBLICO / ADMINISTRADOR (MANTIENE SESIÓN HASTA CERRAR SESIÓN)
     function switchMode(mode) {
       const isAdm = mode === 'admin';
       if (isAdm && !sessionStorage.getItem(ADMIN_SESSION_KEY)) {
@@ -1247,7 +1247,6 @@
       }
     }
 
-    // CARRUSEL Y DROPDOWN PÚBLICO
     function toggleDropdown() { document.getElementById('servicesDropdown').classList.toggle('open'); }
     function nextSlide() { currentSlideIdx = (currentSlideIdx + 1) % state.slides.length; renderHero(); }
     function prevSlide() { currentSlideIdx = (currentSlideIdx - 1 + state.slides.length) % state.slides.length; renderHero(); }
@@ -1308,7 +1307,6 @@
       `).join('');
     }
 
-    // COTIZADOR MULTIMONEDA
     function addCatalogItemToQuote(invId) {
       const it = state.inventory.find(x => x.id === invId);
       if (!it) return;
@@ -1393,7 +1391,128 @@
       closeQuoteModal();
     }
 
-    // RASTREO DE ÓRDENES & ESCÁNER
+    // CÁMARA REAL PARA QR / CÓDIGO DE BARRAS (PÚBLICO E INVENTARIO)
+    async function startCameraStream(videoEl, statusEl) {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        if (statusEl) statusEl.textContent = 'Tu navegador no soporta acceso directo a la cámara. Escribe el código o usa la simulación.';
+        return null;
+      }
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'environment' } },
+          audio: false
+        });
+        videoEl.srcObject = stream;
+        videoEl.classList.remove('hidden');
+        await videoEl.play();
+        if (statusEl) statusEl.textContent = 'Cámara activa. Enfoca el código QR o código de barras.';
+        return stream;
+      } catch (err) {
+        if (statusEl) {
+          statusEl.textContent = err.name === 'NotAllowedError'
+            ? 'Permiso de cámara denegado. Actívalo en el navegador y vuelve a intentar.'
+            : 'No se pudo abrir la cámara (' + (err.name || 'Error') + '). Usa el campo de texto o simulación.';
+        }
+        return null;
+      }
+    }
+
+    function stopMediaStream(stream, videoEl) {
+      if (stream) {
+        stream.getTracks().forEach(t => t.stop());
+      }
+      if (videoEl) {
+        videoEl.pause();
+        videoEl.srcObject = null;
+        videoEl.classList.add('hidden');
+      }
+    }
+
+    async function togglePublicQrScanner() {
+      const container = document.getElementById('publicScannerContainer');
+      const videoEl = document.getElementById('publicVideoPreview');
+      const statusEl = document.getElementById('scannerStatusMsg');
+      const isOpening = container.classList.contains('hidden');
+
+      if (!isOpening) {
+        stopPublicScanner();
+        return;
+      }
+
+      container.classList.remove('hidden');
+      publicMediaStream = await startCameraStream(videoEl, statusEl);
+      if (!publicMediaStream) return;
+
+      clearInterval(publicBarcodeTimer);
+      if ('BarcodeDetector' in window) {
+        const detector = new BarcodeDetector({ formats: ['qr_code', 'code_128', 'code_39', 'ean_13', 'upc_a'] });
+        publicBarcodeTimer = setInterval(async () => {
+          if (!videoEl || videoEl.readyState < 2) return;
+          try {
+            const codes = await detector.detect(videoEl);
+            if (codes && codes.length > 0 && codes[0].rawValue) {
+              let val = codes[0].rawValue.trim();
+              const matchHash = val.match(/#rastreo=([^&]+)/i);
+              if (matchHash) val = decodeURIComponent(matchHash[1]);
+              document.getElementById('trackQueryInput').value = val;
+              stopPublicScanner();
+              handlePublicTrack({ preventDefault: () => {} });
+            }
+          } catch (e) {}
+        }, 350);
+      } else if (statusEl) {
+        statusEl.textContent = 'Cámara abierta. Escribe el código o usa la simulación si tu navegador no lee QR automáticamente.';
+      }
+    }
+
+    function stopPublicScanner() {
+      clearInterval(publicBarcodeTimer);
+      publicBarcodeTimer = null;
+      stopMediaStream(publicMediaStream, document.getElementById('publicVideoPreview'));
+      publicMediaStream = null;
+      document.getElementById('publicScannerContainer').classList.add('hidden');
+    }
+
+    async function toggleInventoryBarcodeScanner() {
+      const box = document.getElementById('invScannerBox');
+      const videoEl = document.getElementById('invVideoPreview');
+      const isOpening = box.classList.contains('hidden');
+
+      if (!isOpening) {
+        stopInvScanner();
+        return;
+      }
+
+      box.classList.remove('hidden');
+      invMediaStream = await startCameraStream(videoEl, null);
+      if (!invMediaStream) return;
+
+      clearInterval(invBarcodeTimer);
+      if ('BarcodeDetector' in window) {
+        const detector = new BarcodeDetector({ formats: ['code_128', 'code_39', 'ean_13', 'upc_a', 'qr_code'] });
+        invBarcodeTimer = setInterval(async () => {
+          if (!videoEl || videoEl.readyState < 2) return;
+          try {
+            const codes = await detector.detect(videoEl);
+            if (codes && codes.length > 0 && codes[0].rawValue) {
+              const sku = codes[0].rawValue.trim();
+              document.getElementById('barcodeScannerInput').value = sku;
+              stopInvScanner();
+              processScannedInventoryBarcode(sku);
+            }
+          } catch (e) {}
+        }, 350);
+      }
+    }
+
+    function stopInvScanner() {
+      clearInterval(invBarcodeTimer);
+      invBarcodeTimer = null;
+      stopMediaStream(invMediaStream, document.getElementById('invVideoPreview'));
+      invMediaStream = null;
+      document.getElementById('invScannerBox').classList.add('hidden');
+    }
+
     function getOrderPaidUsd(ord) {
       return (ord.payments || []).reduce((acc, p) => acc + Number(p.usdAmount || p.amountUsd || 0), 0);
     }
@@ -1401,12 +1520,6 @@
       return Math.max(0, Number(ord.cost || 0) - getOrderPaidUsd(ord));
     }
 
-    function togglePublicQrScanner() {
-      document.getElementById('publicScannerContainer').classList.toggle('hidden');
-    }
-    function stopPublicScanner() {
-      document.getElementById('publicScannerContainer').classList.add('hidden');
-    }
     function simulateBarcodeScan(code) {
       document.getElementById('trackQueryInput').value = code;
       stopPublicScanner();
@@ -1451,7 +1564,6 @@
       }
     }
 
-    // RENDERIZADO COMPLETO DEL PANEL ADMINISTRATIVO
     function renderAdminAll() {
       const totalFacturado = state.orders.reduce((a, o) => a + Number(o.cost || 0), 0);
       const totalAbonado = state.orders.reduce((a, o) => a + getOrderPaidUsd(o), 0);
@@ -1658,7 +1770,6 @@
       box.innerHTML = htmlRes;
     }
 
-    // CONVERSIÓN DE COTIZACIÓN A ORDEN / FACTURA
     async function convertQuoteToOrder(quoteId) {
       const q = state.quotes.find(x => x.id === quoteId);
       if (!q) return;
@@ -1707,7 +1818,6 @@
       showToast(`Cotización ${quoteId} eliminada`);
     }
 
-    // CRUD ÓRDENES
     async function createNewOrder(e) {
       e.preventDefault();
       const costVal = parseFloat(document.getElementById('ordCost').value || 0);
@@ -1830,7 +1940,6 @@
       showToast(`Orden ${id} eliminada`);
     }
 
-    // FACTURA OFICIAL Y ABONOS
     function openInvoiceModal(id) {
       const ord = state.orders.find(o => o.id === id);
       if (!ord) return;
@@ -1932,7 +2041,6 @@
       notifyOrderWhatsApp(ord.id);
     }
 
-    // INVENTARIO & ESCÁNER
     function filterAdminInventory(query) {
       const q = String(query || '').trim().toLowerCase();
       const body = document.getElementById('adminInventoryTableBody');
@@ -1954,9 +2062,6 @@
           </td>
         </tr>`).join('');
     }
-
-    function toggleInventoryBarcodeScanner() { document.getElementById('invScannerBox').classList.toggle('hidden'); }
-    function stopInvScanner() { document.getElementById('invScannerBox').classList.add('hidden'); }
 
     function handleBarcodeInputSubmit(e) {
       e.preventDefault();
@@ -2090,7 +2195,6 @@
       showToast('Producto eliminado');
     }
 
-    // VISITAS, CONTABILIDAD Y CARRUSEL
     function createVisit(e) {
       e.preventDefault();
       state.visits.unshift({
