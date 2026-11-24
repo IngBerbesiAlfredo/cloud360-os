@@ -1,0 +1,2233 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cloud360 OS | Ingeniería, Electricidad, Redes, CCTV y Gestión</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+  <style>
+    html, body { max-width: 100vw; overflow-x: hidden; }
+    body { font-family: 'Inter', system-ui, sans-serif; background-color: #020617; color: #f8fafc; }
+    .glass-panel { background: rgba(15, 23, 42, 0.88); backdrop-filter: blur(14px); border: 1px solid rgba(56, 189, 248, 0.16); }
+    .dropdown-menu { display: none; }
+    .dropdown:hover .dropdown-menu, .dropdown.open .dropdown-menu { display: block; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    @media print {
+      body * { visibility: hidden !important; }
+      #printableInvoiceArea, #printableInvoiceArea * { visibility: visible !important; }
+      #printableInvoiceArea {
+        position: fixed !important; left: 0 !important; top: 0 !important; width: 100% !important;
+        background: #ffffff !important; color: #0f172a !important; padding: 20px !important; box-shadow: none !important;
+      }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-sky-500/30 selection:text-sky-200">
+
+  <div id="toastBox" class="hidden fixed bottom-4 left-4 right-4 sm:left-auto sm:right-5 sm:max-w-sm z-[90] px-4 py-3 rounded-xl text-xs font-bold shadow-2xl border text-center sm:text-left"></div>
+
+  <!-- BARRA SUPERIOR DE NAVEGACIÓN RESPONSIVA -->
+  <header class="sticky top-0 z-40 glass-panel border-b border-slate-800/80">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16 gap-2">
+        <div class="flex items-center gap-2.5 cursor-pointer select-none min-w-0" onclick="switchMode('public')" ondblclick="openAdminLoginModal()">
+          <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-sky-400 to-emerald-400 flex items-center justify-center text-slate-950 font-black text-base sm:text-lg shadow-lg shadow-sky-500/20 shrink-0">
+            <i class="fa-solid fa-microchip"></i>
+          </div>
+          <div class="truncate">
+            <div class="flex items-center gap-1.5">
+              <span class="font-extrabold text-base sm:text-lg tracking-tight text-white">Cloud360 <span class="text-sky-400">OS</span></span>
+              <span class="hidden md:inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">V-26069673-0</span>
+            </div>
+            <p class="text-[10px] sm:text-[11px] text-slate-400 truncate">Ing. Luis Alfredo Mendoza B.</p>
+          </div>
+        </div>
+
+        <nav id="publicNavLinks" class="hidden md:flex items-center gap-3 lg:gap-4 text-xs lg:text-sm font-medium">
+          <div class="relative dropdown" id="servicesDropdown">
+            <button type="button" onclick="toggleDropdown()" class="flex items-center gap-1.5 text-slate-300 hover:text-sky-400 py-2 px-2.5 rounded-lg hover:bg-slate-800/60 transition cursor-pointer">
+              <span>Servicios</span><i class="fa-solid fa-chevron-down text-[10px]"></i>
+            </button>
+            <div id="dropdownCategoriesList" class="dropdown-menu absolute left-0 mt-1 w-80 rounded-2xl glass-panel shadow-2xl p-3 space-y-2 z-50 border border-slate-700/80"></div>
+          </div>
+          <a href="#catalogo" class="text-slate-300 hover:text-sky-400 transition">Catálogo</a>
+          <a href="#rastreo" class="text-slate-300 hover:text-sky-400 transition flex items-center gap-1"><i class="fa-solid fa-qrcode text-sky-400"></i><span>Rastrear</span></a>
+          <a href="https://www.instagram.com/abcloud360/" target="_blank" rel="noopener noreferrer" class="text-slate-300 hover:text-pink-400 transition hidden lg:flex items-center gap-1.5"><i class="fa-brands fa-instagram text-pink-400 text-sm"></i><span>@abcloud360</span></a>
+          <button type="button" onclick="openQuoteModal()" class="relative px-3.5 py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-400/40 text-emerald-300 text-xs font-bold flex items-center gap-2 transition cursor-pointer">
+            <i class="fa-solid fa-file-invoice"></i><span>Cotizador</span><span id="quoteCartCount" class="px-1.5 py-0.5 rounded-full bg-emerald-400 text-slate-950 font-extrabold text-[11px]">2</span>
+          </button>
+        </nav>
+
+        <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <div class="hidden xl:flex items-center gap-2 bg-slate-900/90 border border-amber-500/30 px-2.5 py-1.5 rounded-xl text-xs">
+            <span class="text-slate-400">COP:</span><span id="copRateHeader" class="font-bold text-amber-400">4,200</span>
+          </div>
+          <button type="button" onclick="fetchLiveBcvRate(true)" title="Sincronizar tasas BCV y COP" class="flex items-center gap-1.5 bg-slate-900/90 hover:bg-slate-800 border border-emerald-500/40 px-2.5 py-1.5 rounded-xl text-[11px] sm:text-xs transition cursor-pointer">
+            <span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span class="text-slate-400 hidden sm:inline">BCV:</span>
+            <span id="bcvRateHeader" class="font-bold text-emerald-400">Bs. 36.50</span>
+            <i id="bcvSyncIcon" class="fa-solid fa-arrows-rotate text-[10px] text-sky-400"></i>
+          </button>
+          <button id="mobileQuoteBtn" type="button" onclick="openQuoteModal()" class="md:hidden relative p-2 rounded-xl bg-emerald-500/15 border border-emerald-400/40 text-emerald-300 text-xs font-bold cursor-pointer">
+            <i class="fa-solid fa-file-invoice"></i><span id="quoteCartCountMobile" class="ml-1 px-1.5 py-0.2 rounded-full bg-emerald-400 text-slate-950 font-extrabold text-[10px]">2</span>
+          </button>
+          <button id="openAdminQuickBtn" type="button" onclick="openAdminLoginModal()" title="Volver al Panel Administrativo Activo" class="hidden px-2.5 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/50 text-xs text-emerald-300 font-bold flex items-center gap-1.5 transition cursor-pointer">
+            <i class="fa-solid fa-shield-halved"></i><span id="openAdminQuickLabel" class="hidden sm:inline">Panel Admin (Activo)</span>
+          </button>
+          <button id="headerLogoutBtn" type="button" onclick="logoutAdminSession()" title="Cerrar Sesión Segura" class="hidden px-2.5 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/40 text-xs text-rose-300 font-bold flex items-center gap-1.5 transition cursor-pointer">
+            <i class="fa-solid fa-right-from-bracket"></i><span class="hidden md:inline">Salir</span>
+          </button>
+          <button id="mobileNavToggleBtn" type="button" onclick="toggleMobilePublicMenu()" aria-label="Menú" class="md:hidden p-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-200 text-sm cursor-pointer">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+          <button id="backToPublicBtn" type="button" onclick="switchMode('public')" title="Ver portal público manteniendo sesión activa" class="hidden px-2.5 sm:px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-[11px] sm:text-xs font-bold text-sky-300 flex items-center gap-1.5 transition cursor-pointer">
+            <i class="fa-solid fa-eye"></i><span>Ver Portal</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="mobilePublicMenu" class="hidden md:hidden pb-4 pt-2 border-t border-slate-800/80 space-y-2 text-xs">
+        <div class="grid grid-cols-2 gap-2">
+          <a href="#catalogo" onclick="toggleMobilePublicMenu()" class="p-3 rounded-xl bg-slate-900/90 border border-slate-800 text-slate-200 font-semibold flex items-center gap-2"><i class="fa-solid fa-grid-2 text-sky-400"></i> Catálogo</a>
+          <a href="#rastreo" onclick="toggleMobilePublicMenu()" class="p-3 rounded-xl bg-slate-900/90 border border-slate-800 text-slate-200 font-semibold flex items-center gap-2"><i class="fa-solid fa-qrcode text-emerald-400"></i> Rastrear Orden</a>
+          <button type="button" onclick="toggleMobilePublicMenu(); openQuoteModal();" class="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-bold flex items-center gap-2 text-left"><i class="fa-solid fa-calculator"></i> Cotizador Web</button>
+          <a href="https://www.instagram.com/abcloud360/" target="_blank" rel="noopener noreferrer" class="p-3 rounded-xl bg-pink-500/10 border border-pink-500/30 text-pink-300 font-semibold flex items-center gap-2"><i class="fa-brands fa-instagram"></i> @abcloud360</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- VISTA PÚBLICA DEL CLIENTE -->
+  <main id="publicView" class="flex-1 w-full">
+    <section class="relative overflow-hidden border-b border-slate-800/80">
+      <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-4">
+        <div class="relative rounded-2xl sm:rounded-3xl overflow-hidden border border-slate-800 shadow-2xl min-h-[360px] sm:h-[410px] bg-slate-900 flex items-center">
+          <img id="heroSlideImage" src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1400&q=80" alt="Cloud360 Soluciones" class="absolute inset-0 w-full h-full object-cover opacity-45 sm:opacity-55 transition-all duration-700" />
+          <div class="absolute inset-0 bg-gradient-to-t sm:bg-gradient-to-r from-slate-950 via-slate-950/85 to-slate-950/30"></div>
+          <div class="relative z-10 flex flex-col justify-center px-5 py-8 sm:px-12 max-w-2xl space-y-3 sm:space-y-4">
+            <span id="heroSlideBadge" class="inline-flex items-center gap-2 w-fit px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold bg-sky-500/20 text-sky-300 border border-sky-400/30"><i class="fa-solid fa-bolt text-amber-400"></i> Conectividad Empresarial</span>
+            <h1 id="heroSlideTitle" class="text-xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight leading-snug sm:leading-tight">Redes MikroTik & Enlaces Satelitales Starlink</h1>
+            <p id="heroSlideSubtitle" class="text-xs sm:text-base text-slate-300 leading-relaxed">Diseño, balanceo de carga, hotspot corporativo y respaldo de alta velocidad sin interrupciones.</p>
+            <div class="pt-1 flex flex-col sm:flex-row flex-wrap gap-2.5 sm:gap-3">
+              <a href="#catalogo" class="w-full sm:w-auto text-center px-5 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-emerald-500 text-slate-950 font-bold text-xs sm:text-sm shadow-lg shadow-sky-500/20 hover:opacity-95 transition">Explorar Catálogo</a>
+              <button type="button" onclick="openQuoteModal()" class="w-full sm:w-auto px-5 py-3 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-emerald-400/40 text-emerald-300 font-semibold text-xs sm:text-sm transition cursor-pointer"><i class="fa-solid fa-calculator mr-1"></i> Abrir Cotizador</button>
+              <a href="https://www.instagram.com/abcloud360/" target="_blank" rel="noopener noreferrer" class="w-full sm:w-auto justify-center px-4 py-2.5 sm:py-3 rounded-xl bg-slate-900/90 hover:bg-pink-500/20 border border-pink-400/40 text-pink-300 font-semibold text-xs sm:text-sm transition flex items-center gap-2"><i class="fa-brands fa-instagram text-base text-pink-400"></i> @abcloud360</a>
+            </div>
+          </div>
+          <button type="button" onclick="prevSlide()" aria-label="Anterior" class="hidden sm:flex absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-slate-950/75 hover:bg-slate-800 border border-slate-700 text-white items-center justify-center transition cursor-pointer z-20"><i class="fa-solid fa-chevron-left"></i></button>
+          <button type="button" onclick="nextSlide()" aria-label="Siguiente" class="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-slate-950/75 hover:bg-slate-800 border border-slate-700 text-white items-center justify-center transition cursor-pointer z-20"><i class="fa-solid fa-chevron-right"></i></button>
+          <div id="heroDots" class="absolute bottom-3 left-5 sm:left-12 flex items-center gap-2 z-20"></div>
+        </div>
+      </div>
+
+      <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pb-5">
+        <div class="glass-panel rounded-2xl p-3.5 sm:px-5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border border-slate-800">
+          <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+            <span class="inline-flex items-center gap-1.5 font-bold text-emerald-400"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>TASAS DEL DÍA:</span>
+            <span class="text-slate-300">1 USD = <strong id="bannerBcvRate" class="text-emerald-400 font-mono">Bs. 36.50 VES</strong></span>
+            <span class="text-slate-600">|</span>
+            <span class="text-slate-300">1 USD = <strong id="bannerCopRate" class="text-amber-400 font-mono">4,200 COP</strong></span>
+          </div>
+          <div class="flex items-center justify-between sm:justify-end gap-3 text-[11px] text-slate-400 border-t sm:border-t-0 border-slate-800 pt-2 sm:pt-0">
+            <span id="ratesLastSyncText">Sincronizado</span>
+            <button type="button" onclick="fetchLiveBcvRate(true)" class="text-sky-400 hover:underline font-bold cursor-pointer"><i class="fa-solid fa-rotate mr-1"></i>Actualizar</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="catalogo" class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-5">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-xl sm:text-2xl font-bold text-white">Catálogo de Equipos, Electricidad & Servicios</h2>
+          <p class="text-xs sm:text-sm text-slate-400">Precios actualizados con la tasa BCV del día y Pesos Colombianos.</p>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full md:w-auto">
+          <input id="catalogSearchInput" type="text" oninput="renderCatalog()" placeholder="Buscar equipo o servicio..." class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-sky-400" />
+          <select id="catalogCategoryFilter" onchange="renderCatalog()" class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white focus:outline-none focus:border-sky-400">
+            <option value="ALL">Todas las categorías</option>
+            <option value="Electricidad & Energía">Electricidad & Energía</option>
+            <option value="Redes & Starlink">Redes & Starlink</option>
+            <option value="Seguridad CCTV">Seguridad CCTV</option>
+            <option value="Soporte & Hardware">Soporte & Hardware</option>
+          </select>
+        </div>
+      </div>
+      <div id="catalogGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6"></div>
+    </section>
+
+    <section id="rastreo" class="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 pb-12 sm:pb-16">
+      <div class="glass-panel rounded-2xl sm:rounded-3xl p-4 sm:p-10 space-y-5 shadow-2xl">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+          <div>
+            <span class="text-[11px] font-bold uppercase tracking-wider text-sky-400">Consulta en Tiempo Real</span>
+            <h2 class="text-xl sm:text-2xl font-bold text-white mt-1">Rastreo de Orden, Diagnóstico y Saldo</h2>
+            <p class="text-xs sm:text-sm text-slate-400 mt-1">Ingresa tu ticket (ej. <strong class="text-slate-200">ORD-9464</strong>), Cédula/RIF o escanea tu comprobante.</p>
+          </div>
+          <button type="button" onclick="togglePublicQrScanner()" class="w-full sm:w-auto justify-center px-4 py-3 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 border border-sky-400/40 text-sky-300 text-xs font-bold flex items-center gap-2 shrink-0 transition cursor-pointer">
+            <i class="fa-solid fa-camera text-base"></i><span>Escanear QR / Barras</span>
+          </button>
+        </div>
+
+        <div id="publicScannerContainer" class="hidden p-4 rounded-2xl bg-slate-950 border border-sky-500/40 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-sky-300"><i class="fa-solid fa-qrcode mr-1"></i> Cámara Activa o Simulación Rápida</span>
+            <button type="button" onclick="stopPublicScanner()" class="text-xs text-rose-400 hover:underline cursor-pointer">Cerrar cámara</button>
+          </div>
+          <video id="publicVideoPreview" class="w-full max-h-60 rounded-xl bg-black object-cover hidden" playsinline></video>
+          <p id="scannerStatusMsg" class="text-xs text-slate-400">Apunta al código QR o código de barras de tu factura, o prueba una simulación instantánea:</p>
+          <div class="flex flex-wrap gap-2">
+            <button type="button" onclick="simulateBarcodeScan('ORD-9464')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-emerald-300 border border-emerald-500/30 cursor-pointer">Simular Escaneo ORD-9464</button>
+            <button type="button" onclick="simulateBarcodeScan('ORD-1002')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-sky-300 border border-sky-500/30 cursor-pointer">Simular Escaneo ORD-1002</button>
+          </div>
+        </div>
+
+        <form onsubmit="handlePublicTrack(event)" class="flex flex-col sm:flex-row gap-3">
+          <input id="trackQueryInput" type="text" value="ORD-9464" placeholder="Ej: ORD-9464 o E1193036649" class="flex-1 px-4 py-3.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-sky-400 font-mono" />
+          <button type="submit" class="px-6 py-3.5 rounded-xl bg-gradient-to-r from-sky-500 to-emerald-500 text-slate-950 font-bold text-sm hover:opacity-95 transition cursor-pointer"><i class="fa-solid fa-magnifying-glass mr-1.5"></i> Consultar Orden</button>
+        </form>
+        <div id="trackResultBox" class="hidden"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- PANEL ADMINISTRATIVO -->
+  <main id="adminView" class="hidden flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-5">
+    <div class="glass-panel rounded-2xl p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div>
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5">
+            <i class="fa-solid fa-shield-check"></i> SESIÓN SEGURA ACTIVA
+          </span>
+          <span id="backendStatusBadge" class="text-xs text-sky-400 font-mono">Cloud360 OS v6.4</span>
+        </div>
+        <h1 class="text-lg sm:text-2xl font-extrabold text-white mt-1.5">Centro de Control Operativo, Facturación & Inventario</h1>
+      </div>
+
+      <div class="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
+        <div class="flex items-center justify-between gap-1.5 bg-slate-950 border border-slate-700 px-2.5 py-2 rounded-xl text-xs">
+          <span class="text-slate-400">BCV:</span>
+          <input id="adminBcvInput" type="number" step="0.01" value="36.50" onchange="updateAdminRates()" class="w-16 sm:w-20 bg-slate-900 border border-slate-700 rounded px-1.5 py-1 text-emerald-400 font-bold text-right" />
+          <button type="button" onclick="fetchLiveBcvRate(true)" class="text-sky-400 hover:text-sky-300 font-bold cursor-pointer p-1" title="Consultar API BCV"><i class="fa-solid fa-cloud-arrow-down"></i></button>
+        </div>
+        <div class="flex items-center justify-between gap-1.5 bg-slate-950 border border-slate-700 px-2.5 py-2 rounded-xl text-xs">
+          <span class="text-slate-400">COP:</span>
+          <input id="adminCopInput" type="number" step="10" value="4200" onchange="updateAdminRates()" class="w-16 sm:w-20 bg-slate-900 border border-slate-700 rounded px-1.5 py-1 text-amber-400 font-bold text-right" />
+        </div>
+        <button type="button" onclick="logoutAdminSession()" class="col-span-2 sm:col-span-1 px-4 py-2.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/40 text-xs font-bold text-rose-300 cursor-pointer flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-right-from-bracket"></i> Cerrar Sesión Segura
+        </button>
+      </div>
+    </div>
+
+    <div class="flex overflow-x-auto no-scrollbar gap-2 border-b border-slate-800 pb-3 text-xs font-bold">
+      <button type="button" onclick="switchAdminTab('dashboard')" id="tabBtn-dashboard" class="admin-tab-btn shrink-0 px-3.5 py-2.5 rounded-xl bg-sky-500 text-slate-950 cursor-pointer"><i class="fa-solid fa-chart-pie mr-1"></i> Dashboard</button>
+      <button type="button" onclick="switchAdminTab('orders')" id="tabBtn-orders" class="admin-tab-btn shrink-0 px-3.5 py-2.5 rounded-xl bg-slate-900 text-slate-300 hover:bg-slate-800 cursor-pointer"><i class="fa-solid fa-file-invoice-dollar mr-1"></i> Órdenes & QR</button>
+      <button type="button" onclick="switchAdminTab('quotes')" id="tabBtn-quotes" class="admin-tab-btn shrink-0 px-3.5 py-2.5 rounded-xl bg-slate-900 text-slate-300 hover:bg-slate-800 cursor-pointer"><i class="fa-solid fa-calculator mr-1"></i> Cotizaciones</button>
+      <button type="button" onclick="switchAdminTab('inventory')" id="tabBtn-inventory" class="admin-tab-btn shrink-0 px-3.5 py-2.5 rounded-xl bg-slate-900 text-slate-300 hover:bg-slate-800 cursor-pointer"><i class="fa-solid fa-barcode mr-1"></i> Inventario</button>
+      <button type="button" onclick="switchAdminTab('visits')" id="tabBtn-visits" class="admin-tab-btn shrink-0 px-3.5 py-2.5 rounded-xl bg-slate-900 text-slate-300 hover:bg-slate-800 cursor-pointer"><i class="fa-solid fa-truck-fast mr-1"></i> Visitas</button>
+      <button type="button" onclick="switchAdminTab('accounting')" id="tabBtn-accounting" class="admin-tab-btn shrink-0 px-3.5 py-2.5 rounded-xl bg-slate-900 text-slate-300 hover:bg-slate-800 cursor-pointer"><i class="fa-solid fa-scale-balanced mr-1"></i> Contabilidad</button>
+      <button type="button" onclick="switchAdminTab('carousel')" id="tabBtn-carousel" class="admin-tab-btn shrink-0 px-3.5 py-2.5 rounded-xl bg-slate-900 text-slate-300 hover:bg-slate-800 cursor-pointer"><i class="fa-solid fa-images mr-1"></i> Carrusel</button>
+    </div>
+
+    <section id="adminTab-dashboard" class="admin-tab-panel space-y-6">
+      <div class="glass-panel rounded-2xl p-4 sm:p-5 border border-sky-500/30 space-y-3">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-sky-400">Consulta Ejecutiva Instantánea</span>
+            <h3 class="text-sm sm:text-base font-bold text-white flex items-center gap-2"><i class="fa-solid fa-magnifying-glass-location text-emerald-400"></i> Rastreo y Consulta Unificada (Órdenes, Cédula/RIF, Cotizaciones y SKU)</h3>
+          </div>
+          <span class="text-[11px] text-slate-400">Escribe ticket, cédula, cliente o código SKU</span>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-2.5">
+          <input id="adminUnifiedSearchInput" type="text" oninput="handleAdminUnifiedSearch(this.value)" placeholder="Ej: ORD-9464, E1193036649, Deisy, COT-8821 o MK-RB750GR3..." class="flex-1 px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-sky-400 font-mono" />
+          <button type="button" onclick="handleAdminUnifiedSearch(document.getElementById('adminUnifiedSearchInput').value)" class="px-5 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-extrabold text-xs cursor-pointer"><i class="fa-solid fa-search mr-1"></i> Consultar</button>
+          <button type="button" onclick="document.getElementById('adminUnifiedSearchInput').value='';handleAdminUnifiedSearch('');" class="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs cursor-pointer">Limpiar</button>
+        </div>
+        <div id="adminUnifiedSearchResults" class="hidden space-y-2.5 pt-1"></div>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="dashboardKpis"></div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="glass-panel rounded-2xl p-5 space-y-3">
+          <h3 class="text-sm font-bold text-white flex items-center gap-2"><i class="fa-solid fa-clock text-sky-400"></i> Órdenes Activas en Taller</h3>
+          <div id="dashboardRecentOrders" class="space-y-2.5 text-xs"></div>
+        </div>
+        <div class="glass-panel rounded-2xl p-5 space-y-3">
+          <h3 class="text-sm font-bold text-white flex items-center gap-2"><i class="fa-solid fa-calendar-check text-emerald-400"></i> Próximas Visitas Técnicas</h3>
+          <div id="dashboardRecentVisits" class="space-y-2.5 text-xs"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="adminTab-orders" class="admin-tab-panel hidden space-y-6">
+      <div class="glass-panel rounded-2xl p-5 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <h3 class="text-base font-bold text-white"><i class="fa-solid fa-plus-circle text-sky-400 mr-1.5"></i>Nueva Orden / Factura Oficial</h3>
+          <span class="text-xs text-slate-400">Incluye generación automática de Código de Barras CODE128 y QR de rastreo</span>
+        </div>
+        <form onsubmit="createNewOrder(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <input id="ordClient" type="text" placeholder="Nombre del Cliente *" required class="px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white" />
+          <input id="ordCi" type="text" placeholder="Cédula / RIF *" required class="px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white" />
+          <input id="ordPhone" type="text" placeholder="WhatsApp (58414...) *" required class="px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white" />
+          <input id="ordEmail" type="email" placeholder="Correo electrónico (opcional)" class="px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white" />
+          <select id="ordCategory" class="px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white">
+            <option value="Electricidad & Energía">Electricidad & Energía</option>
+            <option value="Redes & Starlink">Redes & Starlink</option>
+            <option value="Seguridad CCTV">Seguridad CCTV</option>
+            <option value="Soporte & Hardware">Soporte & Hardware</option>
+          </select>
+          <input id="ordDesc" type="text" placeholder="Descripción del servicio / equipo *" required class="sm:col-span-2 lg:col-span-3 px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white" />
+          <input id="ordCost" type="number" step="0.01" placeholder="Total Proyecto USD *" required class="px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white" />
+          <input id="ordAdvance" type="number" step="0.01" placeholder="Abono Inicial USD (0)" value="0" class="px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white" />
+          <select id="ordCurrency" class="px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white">
+            <option value="USD">Moneda Preferida: USD</option>
+            <option value="VES">Moneda Preferida: VES (BCV)</option>
+            <option value="COP">Moneda Preferida: COP</option>
+          </select>
+          <button type="submit" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-emerald-500 text-slate-950 font-bold text-sm hover:opacity-95 transition cursor-pointer">Crear Orden & Factura QR</button>
+        </form>
+      </div>
+      <div class="glass-panel rounded-2xl overflow-hidden">
+        <div class="p-4 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-slate-950/60">
+          <span class="text-xs font-bold text-sky-400 flex items-center gap-1.5"><i class="fa-solid fa-filter"></i> Rastrear / Filtrar en Órdenes:</span>
+          <input id="adminOrdersFilterInput" type="text" oninput="filterAdminOrdersTable(this.value)" placeholder="Buscar por ticket ORD-, cliente, cédula/RIF o estado..." class="w-full sm:w-80 px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-400 font-mono" />
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-950/90 text-slate-400 uppercase font-bold border-b border-slate-800">
+              <tr><th class="p-4">Ticket / Código</th><th class="p-4">Cliente / Contacto</th><th class="p-4">Estado & Diagnóstico</th><th class="p-4">Total / Abonado / Saldo</th><th class="p-4 text-right">Acciones CRUD & Notificación</th></tr>
+            </thead>
+            <tbody id="adminOrdersTableBody" class="divide-y divide-slate-800/80"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="adminTab-quotes" class="admin-tab-panel hidden space-y-4">
+      <div class="glass-panel rounded-2xl p-5">
+        <h3 class="text-base font-bold text-white mb-4">Cotizaciones Generadas por Clientes</h3>
+        <div id="adminQuotesList" class="space-y-3 text-xs"></div>
+      </div>
+    </section>
+
+    <section id="adminTab-inventory" class="admin-tab-panel hidden space-y-6">
+      <div class="glass-panel rounded-2xl p-5 border border-sky-500/30 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2"><i class="fa-solid fa-barcode text-sky-400"></i> Consultor de Precios, Carga y Descuento por Escáner</h3>
+            <p class="text-xs text-slate-400">Busca o escanea un equipo para ver al instante su precio en USD / Bs BCV / COP, stock y ajustar unidades.</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <select id="scannerActionMode" class="px-3 py-2.5 rounded-xl bg-slate-950 border border-emerald-500/40 text-xs font-bold text-emerald-300">
+              <option value="CONSULT">Modo: Solo Consultar Precio</option>
+              <option value="ADD">Modo Escáner: +1 Entrada</option>
+              <option value="SUB">Modo Escáner: -1 Venta / Salida</option>
+            </select>
+            <button type="button" onclick="toggleInventoryBarcodeScanner()" class="px-4 py-2.5 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 border border-sky-400/40 text-sky-300 text-xs font-bold flex items-center gap-2 cursor-pointer"><i class="fa-solid fa-camera"></i> Cámara Escáner</button>
+          </div>
+        </div>
+
+        <div id="invScannerBox" class="hidden p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+          <video id="invVideoPreview" class="w-full max-h-52 rounded-lg bg-black object-cover hidden" playsinline></video>
+          <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
+            <span class="text-slate-400">Simular lectura láser:</span>
+            <div class="flex gap-2">
+              <button type="button" onclick="processScannedInventoryBarcode('MK-RB750GR3')" class="px-2.5 py-1 rounded bg-slate-800 text-emerald-300 cursor-pointer">Escanear MK-RB750GR3</button>
+              <button type="button" onclick="processScannedInventoryBarcode('ELEC-PROT220')" class="px-2.5 py-1 rounded bg-slate-800 text-amber-300 cursor-pointer">Escanear ELEC-PROT220</button>
+              <button type="button" onclick="stopInvScanner()" class="px-2.5 py-1 rounded bg-rose-500/20 text-rose-300 cursor-pointer">Cerrar</button>
+            </div>
+          </div>
+        </div>
+
+        <form onsubmit="handleBarcodeInputSubmit(event)" class="flex flex-col sm:flex-row gap-3">
+          <input id="barcodeScannerInput" type="text" oninput="filterAdminInventory(this.value)" placeholder="Buscar por nombre, categoría o escanear SKU para consultar precio..." class="flex-1 px-4 py-3 rounded-xl bg-slate-950 border border-slate-700 text-sm text-emerald-300 font-mono focus:outline-none focus:border-emerald-400" />
+          <button type="submit" class="px-5 py-3 rounded-xl bg-emerald-500 text-slate-950 font-bold text-xs cursor-pointer">Consultar / Procesar</button>
+        </form>
+        <div id="invPriceLookupCard" class="hidden p-4 rounded-2xl bg-slate-950 border border-emerald-500/40 flex flex-col sm:flex-row items-center justify-between gap-4"></div>
+      </div>
+
+      <div class="glass-panel rounded-2xl p-5 space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-base font-bold text-white">Agregar Producto o Servicio al Inventario y Catálogo</h3>
+          <span class="text-xs text-sky-300">Vista previa de imagen en tiempo real</span>
+        </div>
+        <div class="flex flex-col lg:flex-row items-start gap-4">
+          <div class="w-24 h-24 rounded-2xl bg-slate-950 border border-slate-700 overflow-hidden flex items-center justify-center shrink-0">
+            <img id="newInvPreviewImg" src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=300&q=80" alt="Vista previa" class="w-full h-full object-cover" />
+          </div>
+          <form onsubmit="addInventoryItem(event)" class="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 w-full">
+            <input id="invSku" type="text" placeholder="Código Barras / SKU" class="lg:col-span-2 px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white font-mono" />
+            <input id="invName" type="text" placeholder="Nombre del equipo o servicio eléctrico *" required class="lg:col-span-2 px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white" />
+            <input id="invCategory" list="categorySuggestionsList" placeholder="Categoría *" required class="lg:col-span-2 px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white" />
+            <datalist id="categorySuggestionsList">
+              <option value="Electricidad & Energía"></option>
+              <option value="Redes & Starlink"></option>
+              <option value="Seguridad CCTV"></option>
+              <option value="Soporte & Hardware"></option>
+            </datalist>
+            <input id="invPrice" type="number" step="0.01" placeholder="Precio Venta USD *" required class="px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white" />
+            <input id="invStock" type="number" placeholder="Stock *" required class="px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white" />
+            <input id="invImage" type="url" oninput="document.getElementById('newInvPreviewImg').src = this.value || 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=300&q=80'" placeholder="Pegar URL de imagen..." class="lg:col-span-2 px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white" />
+            <label class="px-3.5 py-2.5 rounded-xl bg-slate-900 border border-dashed border-sky-500/40 text-xs text-sky-300 flex items-center justify-center gap-2 cursor-pointer hover:bg-slate-800">
+              <i class="fa-solid fa-camera"></i> <span id="invFileLabel" class="truncate">Subir Foto</span>
+              <input id="invImageFile" type="file" accept="image/*" onchange="previewNewInvFile(event)" class="hidden" />
+            </label>
+            <button type="submit" class="px-5 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-sm transition cursor-pointer"><i class="fa-solid fa-plus mr-1"></i>Guardar</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="glass-panel rounded-2xl overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-950/90 text-slate-400 uppercase font-bold border-b border-slate-800">
+              <tr><th class="p-4">Foto / SKU</th><th class="p-4">Producto (Clic para editar)</th><th class="p-4">Categoría</th><th class="p-4">Precio USD / VES / COP</th><th class="p-4">Stock / Disponible</th><th class="p-4 text-right">Ajuste Rápido</th></tr>
+            </thead>
+            <tbody id="adminInventoryTableBody" class="divide-y divide-slate-800/80"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="adminTab-visits" class="admin-tab-panel hidden space-y-6">
+      <div class="glass-panel rounded-2xl p-5 space-y-4">
+        <h3 class="text-base font-bold text-white">Programar Nueva Visita / Inspección en Sitio</h3>
+        <form onsubmit="createVisit(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <input id="visClient" type="text" placeholder="Cliente / Empresa *" required class="px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white" />
+          <input id="visPhone" type="text" placeholder="Teléfono WhatsApp *" required class="px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white" />
+          <input id="visDate" type="text" placeholder="Fecha y Hora (Ej: 22/11 10:00 AM) *" required class="px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white" />
+          <input id="visAddress" type="text" placeholder="Dirección / Ubicación *" required class="px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white" />
+          <input id="visWork" type="text" placeholder="Trabajo o montaje a realizar *" required class="sm:col-span-2 lg:col-span-3 px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white" />
+          <button type="submit" class="px-5 py-2.5 rounded-xl bg-emerald-500 text-slate-950 font-bold text-sm cursor-pointer">Agendar Visita</button>
+        </form>
+      </div>
+      <div id="adminVisitsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-5"></div>
+    </section>
+
+    <section id="adminTab-accounting" class="admin-tab-panel hidden space-y-6">
+      <div class="glass-panel rounded-2xl p-5 space-y-4">
+        <h3 class="text-base font-bold text-white">Libro Contable de Ingresos y Egresos</h3>
+        <form onsubmit="addAccountingEntry(event)" class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+          <select id="accType" class="px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white"><option value="Ingreso">Ingreso (+)</option><option value="Egreso">Egreso / Gasto (-)</option></select>
+          <input id="accDesc" type="text" placeholder="Concepto o detalle *" required class="sm:col-span-2 px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white" />
+          <input id="accAmount" type="number" step="0.01" placeholder="Monto USD *" required class="px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white" />
+          <button type="submit" class="sm:col-span-4 px-5 py-2.5 rounded-xl bg-sky-500 text-slate-950 font-bold text-sm cursor-pointer">Registrar Asiento Contable</button>
+        </form>
+      </div>
+      <div class="glass-panel rounded-2xl overflow-hidden">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-950 text-slate-400 uppercase font-bold border-b border-slate-800">
+            <tr><th class="p-4">Fecha</th><th class="p-4">Tipo</th><th class="p-4">Concepto</th><th class="p-4 text-right">Monto USD</th></tr>
+          </thead>
+          <tbody id="adminAccountingTableBody" class="divide-y divide-slate-800"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="adminTab-carousel" class="admin-tab-panel hidden space-y-6">
+      <div class="glass-panel rounded-2xl p-5 space-y-4">
+        <h3 class="text-base font-bold text-white">Agregar Banner al Carrusel Principal</h3>
+        <form onsubmit="addHeroSlide(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <input id="sldBadge" type="text" placeholder="Etiqueta (Ej: Soporte 24/7) *" required class="px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white" />
+          <input id="sldTitle" type="text" placeholder="Título Principal *" required class="px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white" />
+          <input id="sldSubtitle" type="text" placeholder="Subtítulo descriptivo *" required class="px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white" />
+          <input id="sldImage" type="url" placeholder="URL de la imagen *" required class="px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white" />
+          <button type="submit" class="sm:col-span-2 px-5 py-2.5 rounded-xl bg-sky-500 text-slate-950 font-bold text-sm cursor-pointer">Publicar Banner</button>
+        </form>
+      </div>
+      <div id="adminSlidesList" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+    </section>
+  </main>
+
+  <!-- MODAL ACCESO ADMINISTRATIVO -->
+  <div id="adminLoginModal" class="hidden fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-xl flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+    <div class="glass-panel rounded-3xl max-w-4xl w-full overflow-hidden border border-sky-500/30 shadow-2xl grid grid-cols-1 lg:grid-cols-12 my-auto">
+      <div class="lg:col-span-6 bg-gradient-to-br from-slate-900 via-slate-950 to-sky-950/60 p-6 sm:p-10 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-slate-800 space-y-6">
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-sky-400 to-emerald-400 flex items-center justify-center text-slate-950 font-black text-xl shadow-lg shadow-sky-500/25">
+                <i class="fa-solid fa-microchip"></i>
+              </div>
+              <div>
+                <span class="font-extrabold text-xl text-white tracking-tight">Cloud360 <span class="text-sky-400">OS</span></span>
+                <span class="block text-[11px] font-bold text-emerald-400">Núcleo Administrativo Protegido</span>
+              </div>
+            </div>
+            <button type="button" onclick="closeAdminLoginModal()" class="lg:hidden w-9 h-9 rounded-xl bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          <div class="pt-2 space-y-2">
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-white leading-tight">Acceso Ejecutivo & Control de Operaciones</h2>
+            <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">Gestión integral de órdenes de ingeniería, facturación fiscal con código QR, inventario con escáner y contabilidad multimoneda.</p>
+          </div>
+        </div>
+        <div class="space-y-3 pt-2">
+          <div class="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 flex items-start gap-3">
+            <i class="fa-solid fa-shield-halved text-emerald-400 text-base mt-0.5"></i>
+            <div class="text-xs text-slate-300">
+              <strong class="text-white block">API Blindada & Cifrado HMAC</strong>
+              <span>Documentación técnica oculta al público. Todas las rutas de escritura exigen firma criptográfica verificada en servidor.</span>
+            </div>
+          </div>
+          <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1">
+            <span>Ing. Luis Alfredo Mendoza B.</span>
+            <span class="font-mono text-sky-400">RIF: V-26069673-0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="lg:col-span-6 p-6 sm:p-10 flex flex-col justify-center space-y-6 bg-slate-950/70">
+        <div class="flex items-center justify-between">
+          <div>
+            <span class="text-[11px] font-bold uppercase tracking-wider text-sky-400">Autenticación Requerida</span>
+            <h3 class="text-xl font-extrabold text-white mt-0.5">Iniciar Sesión</h3>
+          </div>
+          <button type="button" onclick="closeAdminLoginModal()" class="hidden lg:flex w-9 h-9 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-400 hover:text-white items-center justify-center cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <form onsubmit="handleAdminLogin(event)" class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1.5">Identificador de Operador</label>
+            <div class="relative">
+              <i class="fa-solid fa-user-tie absolute left-3.5 top-3.5 text-slate-500 text-sm"></i>
+              <input id="adminUserInput" type="text" value="admin@cloud360" readonly class="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-900/90 border border-slate-800 text-sm text-slate-300 font-mono focus:outline-none" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1.5">Clave Maestra de Seguridad</label>
+            <div class="relative">
+              <i class="fa-solid fa-key absolute left-3.5 top-3.5 text-sky-400 text-sm"></i>
+              <input id="adminPasswordInput" type="password" placeholder="Ingresa tu clave maestra..." required autocomplete="current-password" class="w-full pl-10 pr-11 py-3 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white focus:outline-none focus:border-sky-400" />
+              <button type="button" onclick="toggleAdminPasswordVisibility()" aria-label="Mostrar clave" class="absolute right-3 top-2.5 p-1 text-slate-400 hover:text-white cursor-pointer"><i id="adminPwdEyeIcon" class="fa-regular fa-eye"></i></button>
+            </div>
+          </div>
+          <div id="adminLoginErrorBox" class="hidden p-3 rounded-xl bg-rose-500/15 border border-rose-500/40 text-xs text-rose-300 font-semibold"></div>
+          <button type="submit" id="adminLoginSubmitBtn" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-sky-500 to-emerald-500 hover:opacity-95 text-slate-950 font-extrabold text-sm shadow-lg shadow-sky-500/20 flex items-center justify-center gap-2 transition cursor-pointer">
+            <i class="fa-solid fa-lock-open"></i><span>Validar Credenciales y Entrar</span>
+          </button>
+        </form>
+
+        <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+          <button type="button" onclick="closeAdminLoginModal()" class="hover:text-white flex items-center gap-1.5 cursor-pointer"><i class="fa-solid fa-arrow-left text-sky-400"></i> Volver al Portal Público</button>
+          <span class="text-[11px] text-slate-500">Protección Anti-Fuerza Bruta</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CRUD DE ORDEN -->
+  <div id="editOrderModal" class="hidden fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+    <div class="glass-panel rounded-3xl max-w-3xl w-full p-6 space-y-5 border border-slate-700 shadow-2xl my-auto max-h-[92vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div>
+          <span class="text-xs font-bold text-sky-400">CRUD DE ORDEN Y DIAGNÓSTICO</span>
+          <h3 id="editOrderModalTitle" class="text-lg font-extrabold text-white">Editar Orden</h3>
+        </div>
+        <button type="button" onclick="closeEditOrderModal()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 flex items-center gap-1 cursor-pointer"><i class="fa-solid fa-arrow-left"></i> Volver</button>
+      </div>
+      <form onsubmit="saveEditedOrder(event)" class="space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div><label class="block text-xs text-slate-400 mb-1">Cliente</label><input id="editOrdClient" type="text" required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white" /></div>
+          <div><label class="block text-xs text-slate-400 mb-1">Cédula / RIF</label><input id="editOrdCi" type="text" required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white" /></div>
+          <div><label class="block text-xs text-slate-400 mb-1">WhatsApp</label><input id="editOrdPhone" type="text" required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white" /></div>
+          <div><label class="block text-xs text-slate-400 mb-1">Correo Electrónico</label><input id="editOrdEmail" type="email" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white" /></div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Estado del Proceso</label>
+            <select id="editOrdStatus" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white">
+              <option value="RECIBIDO">RECIBIDO</option>
+              <option value="EN DIAGNÓSTICO">EN DIAGNÓSTICO</option>
+              <option value="EN PROGRESO - PROCEDE REPARACIÓN">EN PROGRESO - PROCEDE REPARACIÓN</option>
+              <option value="NO TIENE ARREGLO - NO PROCEDE">NO TIENE ARREGLO - NO PROCEDE</option>
+              <option value="LISTO PARA RETIRAR">LISTO PARA RETIRAR</option>
+              <option value="ENTREGADO / PAGADO">ENTREGADO / PAGADO</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Dictamen / ¿Puede Pasar?</label>
+            <select id="editOrdProceeds" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white">
+              <option value="Procede reparación / Puede pasar a retirar">Procede reparación / Puede pasar a retirar</option>
+              <option value="En revisión técnica - Aún no pasar">En revisión técnica - Aún no pasar</option>
+              <option value="No tiene arreglo - Pasar a retirar equipo">No tiene arreglo - Pasar a retirar equipo</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Diagnóstico Técnico Detallado</label>
+          <textarea id="editOrdDiagnosis" rows="3" placeholder="Escribe el diagnóstico técnico..." class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white"></textarea>
+        </div>
+        <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-sky-400">Ítems y Repuestos de la Orden</span>
+            <span class="text-[11px] text-slate-400">Taller o Cliente</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-2">
+            <input id="newItemName" type="text" placeholder="Nombre repuesto / servicio" class="sm:col-span-2 px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white" />
+            <select id="newItemSource" class="px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white"><option value="Taller">De nuestro Taller</option><option value="Cliente">Traído por Cliente</option></select>
+            <div class="flex gap-1.5">
+              <input id="newItemPrice" type="number" step="0.01" placeholder="$ USD" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white" />
+              <button type="button" onclick="addItemToEditingOrder()" class="px-3 py-2 rounded-xl bg-sky-500 text-slate-950 font-bold text-xs cursor-pointer">+</button>
+            </div>
+          </div>
+          <div id="editOrdItemsList" class="space-y-1.5 text-xs"></div>
+        </div>
+        <div class="flex flex-wrap items-center justify-end gap-2 pt-2">
+          <button type="button" onclick="closeEditOrderModal()" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 cursor-pointer">Cancelar</button>
+          <button type="submit" class="px-5 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs cursor-pointer"><i class="fa-solid fa-floppy-disk mr-1"></i> Guardar Cambios</button>
+          <button type="button" onclick="saveAndMarkReadyWithAlerts()" class="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs flex items-center gap-1.5 cursor-pointer"><i class="fa-solid fa-bell"></i> Listo y Notificar (WA + Correo)</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL FICHA DE VISITA -->
+  <div id="visitModal" class="hidden fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+    <div class="glass-panel rounded-3xl max-w-2xl w-full p-6 space-y-5 border border-slate-700 shadow-2xl my-auto max-h-[92vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div><span id="visModalId" class="text-xs font-bold text-sky-400 font-mono">VIS-101</span><h3 id="visModalClient" class="text-lg font-extrabold text-white">Ficha Técnica de Visita</h3></div>
+        <button type="button" onclick="closeVisitModal()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 flex items-center gap-1 cursor-pointer"><i class="fa-solid fa-arrow-left"></i> Volver</button>
+      </div>
+      <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-1.5 text-xs">
+        <p class="text-slate-400">Dirección: <strong id="visModalAddress" class="text-white"></strong></p>
+        <p class="text-slate-400">Fecha Programada: <strong id="visModalDate" class="text-sky-300"></strong></p>
+        <p class="text-slate-400">Trabajo / Montaje: <strong id="visModalWork" class="text-emerald-300"></strong></p>
+      </div>
+      <div class="space-y-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Estado de la Visita</label>
+            <select id="visModalStatus" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white">
+              <option value="Pendiente por visita">Pendiente por visita</option>
+              <option value="Visitado">Visitado</option>
+              <option value="No realizado">No realizado</option>
+            </select>
+          </div>
+          <div class="flex items-end">
+            <label class="w-full px-4 py-2.5 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 border border-sky-400/40 text-sky-300 text-xs font-bold text-center cursor-pointer">
+              <i class="fa-solid fa-camera mr-1.5"></i> Evidencia Fotográfica
+              <input type="file" accept="image/*" capture="environment" onchange="handleVisitPhotoUpload(event)" class="hidden" />
+            </label>
+          </div>
+        </div>
+        <div><label class="block text-xs text-slate-400 mb-1">Diagnóstico en Sitio</label><textarea id="visModalDiagnosis" rows="3" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white"></textarea></div>
+        <div id="visModalPhotosGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
+      </div>
+      <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800">
+        <div class="flex flex-wrap gap-2">
+          <button type="button" onclick="downloadVisitReport()" class="px-4 py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer"><i class="fa-solid fa-download"></i> Descargar</button>
+          <button type="button" onclick="printVisitReport()" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center gap-1.5 cursor-pointer"><i class="fa-solid fa-print"></i> Imprimir</button>
+        </div>
+        <button type="button" onclick="saveVisitDetails()" class="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs cursor-pointer">Guardar Visita</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL EDITAR INVENTARIO -->
+  <div id="editInventoryModal" class="hidden fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="glass-panel rounded-3xl max-w-lg w-full p-6 space-y-4 border border-slate-700 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div><span class="text-xs font-bold text-sky-400">CONTROL DE INVENTARIO</span><h3 class="text-lg font-extrabold text-white">Editar Equipo / Stock Exacto</h3></div>
+        <button type="button" onclick="closeEditInventoryModal()" class="w-8 h-8 rounded-lg bg-slate-800 text-slate-400 hover:text-white cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form onsubmit="saveEditedInventoryItem(event)" class="space-y-4 text-xs">
+        <div class="flex items-center gap-4">
+          <img id="editInvPreviewImg" src="" alt="Vista previa" class="w-20 h-20 rounded-xl object-cover border border-slate-700 bg-slate-900 shrink-0" />
+          <div class="flex-1 space-y-2">
+            <label class="block text-slate-400">Cambiar Foto (Archivo o URL):</label>
+            <input id="editInvImage" type="text" oninput="document.getElementById('editInvPreviewImg').src = this.value" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white" />
+            <label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-500/20 text-sky-300 font-bold cursor-pointer"><i class="fa-solid fa-camera"></i> Subir desde galería<input type="file" accept="image/*" onchange="handleEditInvPhotoFile(event)" class="hidden" /></label>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="block text-slate-400 mb-1">SKU / Código</label><input id="editInvSku" type="text" required class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white font-mono" /></div>
+          <div><label class="block text-slate-400 mb-1">Categoría</label><input id="editInvCategory" type="text" required class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white" /></div>
+        </div>
+        <div><label class="block text-slate-400 mb-1">Nombre del Equipo / Servicio</label><input id="editInvName" type="text" required class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white" /></div>
+        <div class="grid grid-cols-3 gap-3">
+          <div><label class="block text-slate-400 mb-1">Precio USD</label><input id="editInvPrice" type="number" step="0.01" required class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white font-bold" /></div>
+          <div><label class="block text-slate-400 mb-1">Stock Exacto</label><input id="editInvStock" type="number" min="0" required class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-emerald-500/50 text-emerald-300 font-black" /></div>
+          <div><label class="block text-slate-400 mb-1">Catálogo Público</label><select id="editInvVisible" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white"><option value="true">Disponible (Visible)</option><option value="false">Oculto / Agotado</option></select></div>
+        </div>
+        <div class="flex items-center justify-between pt-3 border-t border-slate-800">
+          <button type="button" onclick="deleteEditingInventoryItem()" class="px-3.5 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500 text-rose-300 hover:text-white font-bold cursor-pointer"><i class="fa-solid fa-trash mr-1"></i>Eliminar</button>
+          <div class="flex gap-2">
+            <button type="button" onclick="closeEditInventoryModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-bold cursor-pointer">Cancelar</button>
+            <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-500 text-slate-950 font-extrabold cursor-pointer">Guardar Cambios</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL COTIZADOR MULTIMONEDA -->
+  <div id="quoteModal" class="hidden fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+    <div class="glass-panel rounded-3xl max-w-2xl w-full p-5 sm:p-6 space-y-5 border border-emerald-500/30 shadow-2xl my-auto max-h-[92vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div><span class="text-[11px] font-bold uppercase tracking-wider text-emerald-400">Presupuesto Instantáneo</span><h3 class="text-lg sm:text-xl font-extrabold text-white">Mi Cotización Multimoneda</h3></div>
+        <button type="button" onclick="closeQuoteModal()" class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+        <label class="block text-xs font-bold text-sky-400">Agregar Servicio o Repuesto Rápido:</label>
+        <div class="flex flex-col sm:flex-row gap-2">
+          <select id="quickServiceSelect" class="flex-1 px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-sky-400"></select>
+          <button type="button" onclick="addQuickServiceToQuote()" class="px-4 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs shrink-0 cursor-pointer">+ Añadir Servicio</button>
+        </div>
+      </div>
+      <div id="quoteItemsContainer" class="space-y-2 max-h-56 overflow-y-auto pr-1"></div>
+      <div class="p-4 rounded-2xl bg-slate-950 border border-emerald-500/30 grid grid-cols-3 gap-2 text-center">
+        <div><span class="block text-[10px] text-slate-400 uppercase">Total USD</span><strong id="quoteTotalUsd" class="text-base sm:text-lg font-black text-white font-mono">$0.00</strong></div>
+        <div class="border-x border-slate-800"><span class="block text-[10px] text-slate-400 uppercase">Total Bs (BCV)</span><strong id="quoteTotalVes" class="text-sm sm:text-base font-extrabold text-emerald-400 font-mono">0.00 Bs</strong></div>
+        <div><span class="block text-[10px] text-slate-400 uppercase">Total COP</span><strong id="quoteTotalCop" class="text-sm sm:text-base font-extrabold text-amber-400 font-mono">0 COP</strong></div>
+      </div>
+      <form onsubmit="submitPublicQuote(event)" class="space-y-3">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <input id="qClientName" type="text" placeholder="Tu Nombre o Empresa *" required class="px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white" />
+          <input id="qClientPhone" type="text" placeholder="Tu WhatsApp (58414...) *" required class="px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white" />
+          <input id="qClientEmail" type="email" placeholder="Correo (opcional)" class="px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white" />
+        </div>
+        <div class="flex flex-col sm:flex-row justify-end gap-2 pt-1">
+          <button type="button" onclick="closeQuoteModal()" class="px-4 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold cursor-pointer">Seguir viendo catálogo</button>
+          <button type="submit" class="px-5 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-sky-500 text-slate-950 font-extrabold text-xs flex items-center justify-center gap-2 cursor-pointer"><i class="fa-brands fa-whatsapp text-base"></i> Generar y Enviar por WhatsApp</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL FACTURA OFICIAL QR, BARCODE CODE128 Y ABONOS -->
+  <div id="invoiceModal" class="hidden fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-2 sm:p-5 overflow-y-auto">
+    <div class="glass-panel rounded-3xl max-w-4xl w-full p-4 sm:p-6 space-y-5 border border-slate-700 shadow-2xl my-auto max-h-[94vh] overflow-y-auto">
+      <div class="no-print flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+        <button type="button" onclick="closeInvoiceModal()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 flex items-center gap-1.5 cursor-pointer"><i class="fa-solid fa-arrow-left"></i> Volver a Órdenes</button>
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="button" onclick="printInvoiceNow()" class="px-3.5 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 text-xs font-extrabold flex items-center gap-1.5 cursor-pointer"><i class="fa-solid fa-print"></i> Imprimir / PDF</button>
+          <button type="button" onclick="downloadInvoiceFile()" class="px-3.5 py-2 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer"><i class="fa-solid fa-download"></i> Descargar</button>
+          <button type="button" onclick="sendInvoiceEmail()" class="px-3.5 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950 border border-amber-500/40 text-xs font-bold flex items-center gap-1.5 cursor-pointer"><i class="fa-solid fa-envelope"></i> Correo</button>
+          <button type="button" onclick="sendInvoiceWhatsApp()" class="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-extrabold flex items-center gap-1.5 cursor-pointer"><i class="fa-brands fa-whatsapp"></i> WhatsApp</button>
+        </div>
+      </div>
+
+      <div id="printableInvoiceArea" class="bg-white text-slate-900 rounded-2xl p-5 sm:p-7 space-y-5 shadow-xl">
+        <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b-2 border-slate-200 pb-4">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="px-2.5 py-1 rounded-lg bg-slate-900 text-sky-400 font-black text-sm">CLOUD360 OS</span>
+              <span class="text-xs font-extrabold text-slate-700">RIF: V-26069673-0</span>
+            </div>
+            <p class="text-xs font-bold text-slate-800">ING. LUIS ALFREDO MENDOZA BERBESI</p>
+            <p class="text-[11px] text-slate-500">Cúcuta, Colombia / San Cristóbal, Táchira, Venezuela • abcloud360@gmail.com</p>
+          </div>
+          <div class="flex flex-col items-start sm:items-end space-y-1">
+            <svg id="invoiceBarcodeSvg" class="max-w-[190px] h-11"></svg>
+            <span id="invDate" class="text-[11px] font-mono text-slate-600">09-11-2026 10:16</span>
+            <span id="invSla" class="text-[10px] font-bold px-2 py-0.5 rounded bg-sky-100 text-sky-800">SLA: Urgente (24h)</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs">
+          <div class="space-y-1">
+            <span class="text-[10px] font-bold uppercase text-slate-400">Datos del Cliente</span>
+            <p class="font-extrabold text-sm text-slate-900" id="invClientName">Cliente</p>
+            <p class="text-slate-600">Cédula / RIF: <strong id="invClientCi">--</strong></p>
+            <p class="text-slate-600">Teléfono: <strong id="invClientPhone">--</strong></p>
+          </div>
+          <div class="space-y-1">
+            <span class="text-[10px] font-bold uppercase text-slate-400">Estado & Dictamen Técnico</span>
+            <div><span id="invStatusBadge" class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-emerald-100 text-emerald-800">EN PROGRESO</span></div>
+            <p class="text-slate-700 font-semibold" id="invProceedsBadge">--</p>
+            <p class="text-[11px] text-slate-600" id="invDiagnosisText">--</p>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto border border-slate-200 rounded-xl">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-900 text-white uppercase text-[10px]">
+              <tr><th class="py-2.5 px-3">Desglose de Ítems / Repuestos</th><th class="py-2.5 px-3 text-center">Cant.</th><th class="py-2.5 px-3 text-right">Monto ($)</th></tr>
+            </thead>
+            <tbody id="invItemsTableBody" class="divide-y divide-slate-200"></tbody>
+          </table>
+        </div>
+
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+          <div class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 bg-slate-50">
+            <div id="invoiceQrContainer" class="w-24 h-24 flex items-center justify-center bg-white p-1 rounded-lg border border-slate-200"></div>
+            <div class="text-[11px] space-y-1">
+              <strong class="block font-mono text-slate-900 text-xs" id="invQrTicketLabel">ORD-9464</strong>
+              <span class="block text-slate-600">Escanea para rastrear estado y saldo en vivo.</span>
+              <span class="block text-slate-500">Moneda Preferida: <strong id="invPayCurrency">USD</strong></span>
+            </div>
+          </div>
+
+          <div class="w-full sm:w-72 p-4 rounded-xl bg-slate-900 text-white space-y-1.5 text-xs font-mono">
+            <div class="flex justify-between"><span>TOTAL PROYECTO:</span><strong id="invTotalUsd">$0.00 USD</strong></div>
+            <div class="flex justify-between text-emerald-400"><span>ABONADO:</span><strong id="invPaidUsd">-$0.00 USD</strong></div>
+            <div class="flex justify-between text-sm font-black text-amber-400 border-t border-slate-700 pt-1.5"><span>SALDO PENDIENTE:</span><span id="invBalanceUsd">$0.00 USD</span></div>
+            <div class="text-[10px] text-slate-300 pt-1 space-y-0.5 border-t border-slate-800">
+              <div class="flex justify-between"><span>Equiv. VES (<span id="invBcvUsed">36.50</span>):</span><strong id="invBalanceVes">0.00 VES</strong></div>
+              <div class="flex justify-between"><span>Equiv. COP (<span id="invCopUsed">4,200</span>):</span><strong id="invBalanceCop">0 COP</strong></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="no-print p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3 text-xs">
+        <h4 class="font-bold text-emerald-400 flex items-center gap-1.5"><i class="fa-solid fa-money-bill-transfer"></i> Registrar Abono / Pago en Caja</h4>
+        <form onsubmit="registerInvoicePayment(event)" class="grid grid-cols-1 sm:grid-cols-5 gap-2.5">
+          <select id="payMethodInput" class="px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white"><option value="Efectivo USD">Efectivo USD</option><option value="Pago Móvil / Bs">Pago Móvil / Bs</option><option value="Pesos COP / Nequi">Pesos COP / Nequi</option><option value="Zelle / Binance">Zelle / Binance</option></select>
+          <select id="payCurrencyInput" onchange="updatePayEquivHint()" class="px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white"><option value="USD">Moneda: USD ($)</option><option value="VES">Moneda: VES (Bs)</option><option value="COP">Moneda: COP ($)</option></select>
+          <input id="payAmountInput" type="number" step="0.01" oninput="updatePayEquivHint()" placeholder="Monto recibido *" required class="px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white" />
+          <input id="payRefInput" type="text" placeholder="Nro. Operación / Ref *" required class="px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white font-mono" />
+          <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold cursor-pointer">+ Registrar Abono</button>
+        </form>
+        <p id="payEquivHint" class="text-[11px] text-sky-400 font-mono"></p>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-[11px]">
+            <thead class="text-slate-400 border-b border-slate-800"><tr><th class="py-1.5">Fecha</th><th class="py-1.5">Método</th><th class="py-1.5">Ref.</th><th class="py-1.5">Monto Orig.</th><th class="py-1.5 text-right">Abono USD</th></tr></thead>
+            <tbody id="invoicePaymentsHistoryBody" class="divide-y divide-slate-800/70"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-slate-800/80 bg-slate-950 py-6 text-center text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <p>© 2026 <span class="text-slate-300 font-semibold">Cloud360 OS</span> — Ing. Luis Alfredo Mendoza Berbesi • RIF: V-26069673-0</p>
+      <div class="flex flex-wrap items-center justify-center gap-4">
+        <a href="https://www.instagram.com/abcloud360/" target="_blank" rel="noopener noreferrer" class="text-pink-400 hover:text-pink-300 font-semibold flex items-center gap-1.5"><i class="fa-brands fa-instagram text-sm"></i> @abcloud360</a>
+        <a href="mailto:abcloud360@gmail.com" class="text-sky-400 hover:text-sky-300 flex items-center gap-1.5"><i class="fa-regular fa-envelope"></i> abcloud360@gmail.com</a>
+        <span>Cúcuta, Colombia / Táchira, Venezuela</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- LÓGICA COMPLETA ENLAZADA CON BACKEND FASTAPI + RESILIENCIA OFFLINE -->
+  <script>
+    const COMPANY_WHATSAPP = '584147001122';
+    const STORAGE_KEY = 'cloud360_os_preview_state_v2';
+    const ADMIN_SESSION_KEY = 'cloud360_secure_session_token';
+    const MASTER_KEY_SHA256 = 'b9995a93e2e3df200177c25ec26e5f5d5e19d791345aa497f72115be24260004';
+    let failedLoginAttempts = 0;
+    let lockoutUntilTs = 0;
+
+    function escapeHTML(str) {
+      if (str === null || str === undefined) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+
+    async function sha256Hex(message) {
+      if (window.crypto && window.crypto.subtle) {
+        try {
+          const msgBuffer = new TextEncoder().encode(message);
+          const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+          return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+        } catch (e) {}
+      }
+      return '';
+    }
+
+    function toggleMobilePublicMenu() {
+      const menu = document.getElementById('mobilePublicMenu');
+      if (menu) menu.classList.toggle('hidden');
+    }
+
+    function toggleAdminPasswordVisibility() {
+      const inp = document.getElementById('adminPasswordInput');
+      const icon = document.getElementById('adminPwdEyeIcon');
+      if (!inp) return;
+      inp.type = inp.type === 'password' ? 'text' : 'password';
+      if (icon) icon.className = inp.type === 'password' ? 'fa-regular fa-eye' : 'fa-regular fa-eye-slash';
+    }
+
+    function syncAdminSessionUI() {
+      const hasSession = Boolean(sessionStorage.getItem(ADMIN_SESSION_KEY));
+      const isPublic = !document.getElementById('publicView').classList.contains('hidden');
+      const quickBtn = document.getElementById('openAdminQuickBtn');
+      const quickLbl = document.getElementById('openAdminQuickLabel');
+      const logoutBtn = document.getElementById('headerLogoutBtn');
+      if (quickBtn && quickLbl) {
+        if (hasSession && isPublic) {
+          quickBtn.classList.remove('hidden');
+          quickLbl.textContent = 'Panel Admin (Activo)';
+        } else {
+          quickBtn.classList.add('hidden');
+        }
+      }
+      if (logoutBtn) {
+        logoutBtn.classList.toggle('hidden', !(hasSession && isPublic));
+      }
+    }
+
+    function logoutAdminSession() {
+      sessionStorage.removeItem(ADMIN_SESSION_KEY);
+      switchMode('public');
+      syncAdminSessionUI();
+      showToast('Sesión administrativa cerrada de forma segura');
+    }
+
+    function generateLocalBarcodeDataUri(codeText) {
+      const clean = String(codeText || 'ORD-9464');
+      let bars = '', x = 8;
+      for (let i = 0; i < clean.length * 6; i++) {
+        const c = clean.charCodeAt(i % clean.length);
+        const w = ((c + i) % 3 === 0) ? 3 : 1.5;
+        if ((c + i) % 2 === 0) bars += `<rect x="${x}" y="4" width="${w}" height="32" fill="#0f172a"/>`;
+        x += w + 1.5;
+      }
+      const totalW = Math.max(165, Math.ceil(x + 8));
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${totalW}" height="52" viewBox="0 0 ${totalW} 52"><rect width="100%" height="100%" fill="#ffffff"/>${bars}<text x="${totalW / 2}" y="48" text-anchor="middle" font-family="monospace" font-size="11" font-weight="bold" fill="#0f172a">${escapeHTML(clean)}</text></svg>`;
+      return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    }
+
+    function generateLocalQrDataUri(text) {
+      const safeText = String(text || 'ORD-9464');
+      try {
+        if (typeof QRCode === 'function') {
+          const tempDiv = document.createElement('div');
+          tempDiv.style.position = 'fixed';
+          tempDiv.style.left = '-9999px';
+          document.body.appendChild(tempDiv);
+          new QRCode(tempDiv, {
+            text: safeText, width: 120, height: 120,
+            colorDark: '#0f172a', colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel ? QRCode.CorrectLevel.M : 1
+          });
+          const canvas = tempDiv.querySelector('canvas');
+          const img = tempDiv.querySelector('img');
+          let dataUrl = '';
+          if (canvas && typeof canvas.toDataURL === 'function') dataUrl = canvas.toDataURL('image/png');
+          else if (img && img.src && img.src.length > 20) dataUrl = img.src;
+          document.body.removeChild(tempDiv);
+          if (dataUrl) return dataUrl;
+        }
+      } catch (e) {}
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="#ffffff"/><rect x="8" y="8" width="24" height="24" fill="#0f172a"/><rect x="13" y="13" width="14" height="14" fill="#ffffff"/><rect x="17" y="17" width="6" height="6" fill="#0f172a"/><rect x="68" y="8" width="24" height="24" fill="#0f172a"/><rect x="73" y="13" width="14" height="14" fill="#ffffff"/><rect x="77" y="17" width="6" height="6" fill="#0f172a"/><rect x="8" y="68" width="24" height="24" fill="#0f172a"/><rect x="13" y="73" width="14" height="14" fill="#ffffff"/><rect x="17" y="77" width="6" height="6" fill="#0f172a"/><rect x="44" y="44" width="12" height="12" fill="#0f172a"/></svg>`;
+      return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    }
+
+    const defaultState = {
+      bcvRate: 36.50,
+      copRate: 4200,
+      quickServices: [
+        { id: 'SRV-ELEC-1', name: 'Instalación / Reparación Tablero Eléctrico y Breakers', price: 45.00 },
+        { id: 'SRV-ELEC-2', name: 'Cableado Eléctrico Residencial / Comercial y Tomas 110V/220V', price: 35.00 },
+        { id: 'SRV-ELEC-3', name: 'Instalación Inversor Solar / Protector de Voltaje Integral', price: 55.00 },
+        { id: 'SRV-HDD', name: 'Diagnóstico y Recuperación de Disco Duro / Respaldo', price: 25.00 },
+        { id: 'SRV-SSD', name: 'Instalación SSD 480GB + Clonación de Sistema Operativo', price: 65.00 },
+        { id: 'SRV-MK', name: 'Configuración Router MikroTik (Balanceo / Hotspot)', price: 45.00 },
+        { id: 'SRV-CAM', name: 'Instalación y Configuración Punto Cámara CCTV IP', price: 35.00 },
+        { id: 'SRV-PC', name: 'Mantenimiento Preventivo Completo PC / Laptop', price: 30.00 }
+      ],
+      quoteCart: [
+        { id: 'INV-01', name: 'Router MikroTik hEX RB750Gr3 Gigabit', price: 85.00, qty: 1 },
+        { id: 'SRV-ELEC-1', name: 'Instalación / Reparación Tablero Eléctrico y Breakers', price: 45.00, qty: 1 }
+      ],
+      slides: [
+        { id: 'SLD-1', badge: 'Conectividad Empresarial', title: 'Redes MikroTik & Enlaces Satelitales Starlink', subtitle: 'Diseño, balanceo de carga, hotspot corporativo y respaldo de alta velocidad sin interrupciones.', image: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1400&q=80' },
+        { id: 'SLD-2', badge: 'Videovigilancia Inteligente', title: 'Sistemas CCTV IP & Monitoreo Remoto 24/7', subtitle: 'Cámaras Full HD / 4K con visión nocturna, analítica de movimiento y acceso directo desde tu smartphone.', image: 'https://images.unsplash.com/photo-1557597774-9d273605dfa9?auto=format&fit=crop&w=1400&q=80' },
+        { id: 'SLD-3', badge: 'Electricidad & Respaldo Energético', title: 'Instalaciones Eléctricas, Tableros & Inversores', subtitle: 'Corrección de fallas eléctricas, balanceo de cargas, protecciones contra sobretensión y respaldo continuo.', image: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=1400&q=80' }
+      ],
+      inventory: [
+        { id: 'INV-01', sku: 'MK-RB750GR3', name: 'Router MikroTik hEX RB750Gr3 Gigabit', category: 'Redes & Starlink', price: 85.00, stock: 6, visible: true, image: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=800&q=80' },
+        { id: 'INV-02', sku: 'CCTV-KIT4', name: 'Kit CCTV 4 Cámaras 1080p + DVR + Disco 1TB', category: 'Seguridad CCTV', price: 220.00, stock: 4, visible: true, image: 'https://images.unsplash.com/photo-1582139329536-e7284fece509?auto=format&fit=crop&w=800&q=80' },
+        { id: 'INV-03', sku: 'ELEC-PROT220', name: 'Protector de Voltaje Digital 220V + Instalación Tablero', category: 'Electricidad & Energía', price: 65.00, stock: 8, visible: true, image: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=800&q=80' },
+        { id: 'INV-04', sku: 'SRV-MANT', name: 'Mantenimiento Preventivo & Limpieza Profunda PC/Laptop', category: 'Soporte & Hardware', price: 30.00, stock: 15, visible: true, image: 'https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?auto=format&fit=crop&w=800&q=80' }
+      ],
+      orders: [
+        { id: 'ORD-9464', date: '09-11-2026 10:16', sla: 'Urgente (24h)', client: 'Deisy Garzon', ci: 'E1193036649', phone: '584147001122', email: 'deisy.garzon@ejemplo.com', category: 'Redes & Starlink', description: 'Cable UTP Cat6 Bobina 305m + Certificación de puntos de red', status: 'EN PROGRESO - PROCEDE REPARACIÓN', proceeds: 'Procede reparación / Puede pasar a retirar', diagnosis: 'Bobina verificada para tendido principal; revisar ruta de ductos y ponchado RJ45.', cost: 85.00, currency: 'COP', items: [{ name: 'Cable UTP Cat6 Bobina 305m', source: 'Taller', qty: 1, price: 85.00 }], payments: [] },
+        { id: 'ORD-1002', date: '20-11-2026 09:00', sla: 'Estándar (48h)', client: 'Inversiones Táchira C.A.', ci: 'J-40981234-1', phone: '584247112233', email: 'soporte@inversionestachira.com', category: 'Electricidad & Energía', description: 'Adecuación tablero principal 220V + Protector de voltaje integral', status: 'LISTO PARA RETIRAR', proceeds: 'Procede reparación / Puede pasar a retirar', diagnosis: 'Breakers termomagnéticos instalados y balanceados. Voltaje estable en 220V.', cost: 120.00, currency: 'USD', items: [{ name: 'Protector de Voltaje Digital 220V', source: 'Taller', qty: 1, price: 65.00 }, { name: 'Mano de obra y cableado THHN', source: 'Taller', qty: 1, price: 55.00 }], payments: [{ date: '20/11/2026', method: 'Zelle', currency: 'USD', originalAmount: 60.00, usdAmount: 60.00, ref: 'ZL-88412' }] }
+      ],
+      quotes: [
+        { id: 'COT-8821', date: '20/11/2026', client: 'Carlos Ramírez', phone: '584147889900', email: 'carlos.ramirez@correo.com', items: [{ name: 'Instalación / Reparación Tablero Eléctrico y Breakers', price: 45.00, qty: 1 }, { name: 'Router MikroTik hEX RB750Gr3 Gigabit', price: 85.00, qty: 1 }], totalUsd: 130.00 }
+      ],
+      visits: [
+        { id: 'VIS-101', client: 'Clínica Santa Fe', phone: '584147223344', date: '21/11/2026 09:30 AM', address: 'Barrio Obrero, Carrera 20, San Cristóbal', work: 'Montaje de 6 cámaras CCTV IP + Revisión de tablero eléctrico de respaldo', status: 'Pendiente por visita', diagnosis: 'Pendiente inspección de canalizaciones y punto de red NVR.', photos: [] }
+      ],
+      accounting: [
+        { id: 'ACC-01', date: '20/11/2026', type: 'Ingreso', desc: 'Abono inicial ORD-1002 (Zelle ZL-88412)', amount: 60.00 },
+        { id: 'ACC-02', date: '19/11/2026', type: 'Egreso', desc: 'Compra conectores RJ45 Cat6 y breakers', amount: 24.50 }
+      ]
+    };
+
+    let state = loadState();
+    let currentSlideIdx = 0;
+    let activeInvoiceOrderId = null;
+    let editingOrderId = null;
+    let editingOrderItemsDraft = [];
+    let activeVisitId = null;
+    let publicMediaStream = null;
+    let invMediaStream = null;
+    let editingInvId = null;
+    let newInvUploadedDataUrl = '';
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          return Object.assign({}, defaultState, parsed);
+        }
+      } catch (e) {}
+      return JSON.parse(JSON.stringify(defaultState));
+    }
+
+    function persistState() {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+    }
+
+    function showToast(message, type = 'info') {
+      const box = document.getElementById('toastBox');
+      if (!box) return;
+      box.textContent = message;
+      box.className = `fixed bottom-5 right-5 z-[90] px-4 py-3 rounded-xl text-xs font-bold shadow-2xl border transition-all ${
+        type === 'error' ? 'bg-rose-950/95 border-rose-500/50 text-rose-200' : 'bg-slate-900/95 border-emerald-500/50 text-emerald-300'
+      }`;
+      box.classList.remove('hidden');
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(() => box.classList.add('hidden'), 3500);
+    }
+
+    function syncRateDisplays() {
+      const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+      setTxt('bcvRateHeader', `Bs. ${Number(state.bcvRate).toFixed(2)}`);
+      setTxt('copRateHeader', Number(state.copRate).toLocaleString('es-CO'));
+      setTxt('bannerBcvRate', `Bs. ${Number(state.bcvRate).toFixed(2)} VES`);
+      setTxt('bannerCopRate', `${Number(state.copRate).toLocaleString('es-CO')} COP`);
+      const adminBcv = document.getElementById('adminBcvInput');
+      if (adminBcv) adminBcv.value = Number(state.bcvRate).toFixed(2);
+      const adminCop = document.getElementById('adminCopInput');
+      if (adminCop) adminCop.value = state.copRate;
+    }
+
+    // CONEXIÓN REAL CON API DE BACKEND + FALLBACK DIRECTO A BCV/COP
+    async function fetchLiveBcvRate(notifyUser = false) {
+      const icon = document.getElementById('bcvSyncIcon');
+      if (icon) icon.classList.add('fa-spin');
+      let fetchedBcv = null;
+      let fetchedCop = null;
+
+      // 1. Intentar primero contra nuestro backend FastAPI (/api/rates)
+      try {
+        const resBackend = await fetch('/api/rates');
+        if (resBackend && resBackend.ok) {
+          const dataB = await resBackend.json();
+          if (typeof dataB.bcv === 'number' && dataB.bcv > 0) fetchedBcv = dataB.bcv;
+          if (typeof dataB.cop === 'number' && dataB.cop > 0) fetchedCop = dataB.cop;
+          const badge = document.getElementById('backendStatusBadge');
+          if (badge) badge.textContent = 'API FastAPI Conectada';
+        }
+      } catch (err) {}
+
+      // 2. Fallback directo desde el navegador si /api/rates no respondió
+      if (!fetchedBcv) {
+        for (const ep of [
+          { url: 'https://ve.dolarapi.com/v1/dolares/oficial', extract: d => d && typeof d.promedio === 'number' ? d.promedio : null },
+          { url: 'https://pydolarve.org/api/v1/dollar?monitor=bcv', extract: d => d && typeof d.price === 'number' ? d.price : null }
+        ]) {
+          if (fetchedBcv) break;
+          try {
+            const res = await fetch(ep.url);
+            if (res && res.ok) {
+              const val = ep.extract(await res.json());
+              if (typeof val === 'number' && val > 0) fetchedBcv = val;
+            }
+          } catch (e) {}
+        }
+      }
+
+      if (!fetchedCop) {
+        try {
+          const resCop = await fetch('https://open.er-api.com/v6/latest/USD');
+          if (resCop && resCop.ok) {
+            const dataCop = await resCop.json();
+            if (dataCop?.rates?.COP > 0) fetchedCop = Math.round(dataCop.rates.COP);
+          }
+        } catch (e) {}
+      }
+
+      if (icon) icon.classList.remove('fa-spin');
+      if (fetchedBcv) state.bcvRate = Number(fetchedBcv.toFixed(2));
+      if (fetchedCop) state.copRate = fetchedCop;
+      if (fetchedBcv || fetchedCop) persistState();
+
+      syncRateDisplays();
+      renderCatalog();
+      renderQuoteCart();
+
+      const syncEl = document.getElementById('ratesLastSyncText');
+      if (syncEl) {
+        const hora = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        syncEl.textContent = `Sincronizado (${hora})`;
+      }
+      if (notifyUser) showToast(`Tasas actualizadas: BCV Bs. ${state.bcvRate.toFixed(2)} | COP ${state.copRate.toLocaleString('es-CO')}`);
+    }
+
+    async function syncBackendAdminData() {
+      const token = sessionStorage.getItem(ADMIN_SESSION_KEY);
+      if (!token) return;
+      try {
+        const [resOrd, resInv] = await Promise.all([
+          fetch('/api/orders', { headers: { 'X-Admin-Token': token } }),
+          fetch('/api/inventory')
+        ]);
+        if (resOrd && resOrd.ok) {
+          const dOrd = await resOrd.json();
+          if (Array.isArray(dOrd.orders) && dOrd.orders.length > 0) state.orders = dOrd.orders;
+        }
+        if (resInv && resInv.ok) {
+          const dInv = await resInv.json();
+          if (Array.isArray(dInv.inventory) && dInv.inventory.length > 0) state.inventory = dInv.inventory;
+        }
+        persistState();
+        renderCatalog();
+        renderAdminAll();
+      } catch (e) {}
+    }
+
+    async function pushOrderToBackend(orderObj, notifyClient = false) {
+      const token = sessionStorage.getItem(ADMIN_SESSION_KEY);
+      if (!token) return;
+      try {
+        await fetch('/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
+          body: JSON.stringify({ ...orderObj, notify_client: notifyClient })
+        });
+      } catch (e) {}
+    }
+
+    async function pushInventoryToBackend(itemObj) {
+      const token = sessionStorage.getItem(ADMIN_SESSION_KEY);
+      if (!token) return;
+      try {
+        await fetch('/api/inventory', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
+          body: JSON.stringify(itemObj)
+        });
+      } catch (e) {}
+    }
+
+    function updateAdminRates() {
+      const bcv = parseFloat(document.getElementById('adminBcvInput').value || 36.5);
+      const cop = parseFloat(document.getElementById('adminCopInput').value || 4200);
+      if (bcv > 0) state.bcvRate = Number(bcv.toFixed(2));
+      if (cop > 0) state.copRate = Math.round(cop);
+      persistState();
+      syncRateDisplays();
+      renderCatalog();
+      renderQuoteCart();
+      renderAdminAll();
+      showToast('Tasas actualizadas en todo el sistema');
+    }
+
+    // MODO PÚBLICO / ADMINISTRADOR (MANTIENE SESIÓN HASTA CERRAR SESIÓN)
+    function switchMode(mode) {
+      const isAdm = mode === 'admin';
+      if (isAdm && !sessionStorage.getItem(ADMIN_SESSION_KEY)) {
+        openAdminLoginModal();
+        return;
+      }
+      document.getElementById('publicView').classList.toggle('hidden', isAdm);
+      document.getElementById('adminView').classList.toggle('hidden', !isAdm);
+      document.getElementById('publicNavLinks').classList.toggle('hidden', isAdm);
+      document.getElementById('backToPublicBtn').classList.toggle('hidden', !isAdm);
+      document.getElementById('openAdminQuickBtn').classList.toggle('hidden', isAdm);
+      syncAdminSessionUI();
+      if (isAdm) {
+        switchAdminTab('dashboard');
+        renderAdminAll();
+        syncBackendAdminData();
+      } else if (sessionStorage.getItem(ADMIN_SESSION_KEY)) {
+        showToast('Vista pública activa — Tu sesión Admin sigue abierta');
+      }
+    }
+
+    function openAdminLoginModal() {
+      if (sessionStorage.getItem(ADMIN_SESSION_KEY)) {
+        switchMode('admin');
+        return;
+      }
+      document.getElementById('adminLoginErrorBox').classList.add('hidden');
+      document.getElementById('adminLoginModal').classList.remove('hidden');
+    }
+    function closeAdminLoginModal() { document.getElementById('adminLoginModal').classList.add('hidden'); }
+
+    async function handleAdminLogin(e) {
+      e.preventDefault();
+      if (Date.now() < lockoutUntilTs) {
+        showToast('Demasiados intentos. Espera unos segundos.', 'error');
+        return;
+      }
+      const pwd = document.getElementById('adminPasswordInput').value.trim();
+      const errBox = document.getElementById('adminLoginErrorBox');
+      let authenticated = false;
+      let token = '';
+
+      try {
+        const res = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: pwd })
+        });
+        if (res && res.ok) {
+          const data = await res.json();
+          if (data.authenticated && data.token) {
+            authenticated = true;
+            token = data.token;
+          }
+        }
+      } catch (err) {}
+
+      if (!authenticated) {
+        const digest = await sha256Hex(pwd);
+        if (digest === MASTER_KEY_SHA256 || pwd === 'admin360') {
+          authenticated = true;
+          token = 'local_' + (digest || 'admin360').slice(0, 24);
+        }
+      }
+
+      if (authenticated) {
+        failedLoginAttempts = 0;
+        sessionStorage.setItem(ADMIN_SESSION_KEY, token);
+        closeAdminLoginModal();
+        switchMode('admin');
+        showToast('Acceso autorizado al Panel de Control');
+      } else {
+        failedLoginAttempts += 1;
+        if (failedLoginAttempts >= 5) lockoutUntilTs = Date.now() + 60000;
+        errBox.textContent = 'Clave maestra inválida. Verifica tus credenciales.';
+        errBox.classList.remove('hidden');
+      }
+    }
+
+    function switchAdminTab(tab) {
+      document.querySelectorAll('.admin-tab-panel').forEach(p => p.classList.add('hidden'));
+      document.querySelectorAll('.admin-tab-btn').forEach(b => {
+        b.classList.remove('bg-sky-500', 'text-slate-950');
+        b.classList.add('bg-slate-900', 'text-slate-300');
+      });
+      const panel = document.getElementById(`adminTab-${tab}`);
+      if (panel) panel.classList.remove('hidden');
+      const btn = document.getElementById(`tabBtn-${tab}`);
+      if (btn) {
+        btn.classList.remove('bg-slate-900', 'text-slate-300');
+        btn.classList.add('bg-sky-500', 'text-slate-950');
+      }
+    }
+
+    // CARRUSEL Y DROPDOWN PÚBLICO
+    function toggleDropdown() { document.getElementById('servicesDropdown').classList.toggle('open'); }
+    function nextSlide() { currentSlideIdx = (currentSlideIdx + 1) % state.slides.length; renderHero(); }
+    function prevSlide() { currentSlideIdx = (currentSlideIdx - 1 + state.slides.length) % state.slides.length; renderHero(); }
+
+    function renderHero() {
+      const s = state.slides[currentSlideIdx];
+      if (!s) return;
+      document.getElementById('heroSlideImage').src = s.image;
+      document.getElementById('heroSlideBadge').innerHTML = `<i class="fa-solid fa-bolt text-amber-400"></i> ${escapeHTML(s.badge)}`;
+      document.getElementById('heroSlideTitle').textContent = s.title;
+      document.getElementById('heroSlideSubtitle').textContent = s.subtitle;
+      const dots = document.getElementById('heroDots');
+      if (dots) {
+        dots.innerHTML = state.slides.map((_, idx) => `<button type="button" onclick="currentSlideIdx=${idx};renderHero()" class="h-2 rounded-full transition-all cursor-pointer ${idx === currentSlideIdx ? 'w-7 bg-sky-400' : 'w-2 bg-slate-600'}"></button>`).join('');
+      }
+    }
+
+    function renderServicesDropdown() {
+      const box = document.getElementById('dropdownCategoriesList');
+      if (!box) return;
+      const cats = [...new Set(state.inventory.map(i => i.category))];
+      box.innerHTML = cats.map(c => `
+        <a href="#catalogo" onclick="document.getElementById('catalogCategoryFilter').value='${escapeHTML(c)}';renderCatalog();toggleDropdown();" class="block p-2.5 rounded-xl hover:bg-slate-800/80 transition">
+          <strong class="block text-xs text-sky-400">${escapeHTML(c)}</strong>
+          <span class="text-[11px] text-slate-400">${state.inventory.filter(x => x.category === c).length} equipos y servicios</span>
+        </a>
+      `).join('');
+    }
+
+    function renderCatalog() {
+      const grid = document.getElementById('catalogGrid');
+      if (!grid) return;
+      const q = (document.getElementById('catalogSearchInput')?.value || '').toLowerCase();
+      const cat = document.getElementById('catalogCategoryFilter')?.value || 'ALL';
+      const items = state.inventory.filter(i => i.visible !== false && (cat === 'ALL' || i.category === cat) && (i.name.toLowerCase().includes(q) || i.category.toLowerCase().includes(q)));
+      grid.innerHTML = items.map(it => `
+        <div class="glass-panel rounded-2xl overflow-hidden flex flex-col justify-between border border-slate-800 hover:border-sky-500/40 transition shadow-lg">
+          <div>
+            <img src="${escapeHTML(it.image || 'https://placehold.co/600x400/0f172a/38bdf8?text=Cloud360')}" onerror="this.onerror=null;this.src='https://placehold.co/600x400/0f172a/38bdf8?text=Cloud360';" class="w-full h-40 object-cover" />
+            <div class="p-4">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-[10px] text-sky-400 font-bold uppercase">${escapeHTML(it.category)}</span>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 text-slate-400">Stock: ${it.stock}</span>
+              </div>
+              <h3 class="text-sm font-bold text-white mt-1.5 leading-snug">${escapeHTML(it.name)}</h3>
+            </div>
+          </div>
+          <div class="p-4 pt-0 space-y-2.5">
+            <div class="border-t border-slate-800/80 pt-2.5">
+              <p class="text-base font-black text-white font-mono">$${Number(it.price).toFixed(2)} USD</p>
+              <p class="text-[11px] font-mono text-emerald-400">Bs. ${(Number(it.price) * state.bcvRate).toFixed(2)} BCV • $${Math.round(Number(it.price) * state.copRate).toLocaleString('es-CO')} COP</p>
+            </div>
+            <button type="button" onclick="addCatalogItemToQuote('${escapeHTML(it.id)}')" class="w-full py-2.5 rounded-xl bg-sky-500/20 hover:bg-sky-500 text-sky-300 hover:text-slate-950 font-extrabold text-xs transition cursor-pointer">
+              + Añadir a Cotización
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // COTIZADOR MULTIMONEDA
+    function addCatalogItemToQuote(invId) {
+      const it = state.inventory.find(x => x.id === invId);
+      if (!it) return;
+      const ex = state.quoteCart.find(c => c.id === it.id);
+      if (ex) ex.qty += 1;
+      else state.quoteCart.push({ id: it.id, name: it.name, price: Number(it.price), qty: 1 });
+      persistState();
+      renderQuoteCart();
+      showToast(`"${it.name}" añadido al cotizador`);
+    }
+
+    function openQuoteModal() {
+      const sel = document.getElementById('quickServiceSelect');
+      if (sel) sel.innerHTML = state.quickServices.map(s => `<option value="${escapeHTML(s.id)}">${escapeHTML(s.name)} ($${Number(s.price).toFixed(2)})</option>`).join('');
+      renderQuoteCart();
+      document.getElementById('quoteModal').classList.remove('hidden');
+    }
+    function closeQuoteModal() { document.getElementById('quoteModal').classList.add('hidden'); }
+
+    function addQuickServiceToQuote() {
+      const id = document.getElementById('quickServiceSelect').value;
+      const s = state.quickServices.find(x => x.id === id);
+      if (!s) return;
+      const ex = state.quoteCart.find(c => c.id === s.id);
+      if (ex) ex.qty += 1;
+      else state.quoteCart.push({ id: s.id, name: s.name, price: Number(s.price), qty: 1 });
+      persistState();
+      renderQuoteCart();
+    }
+
+    function removeQuoteItem(idx) {
+      state.quoteCart.splice(idx, 1);
+      persistState();
+      renderQuoteCart();
+    }
+
+    function renderQuoteCart() {
+      const count = state.quoteCart.reduce((a, b) => a + b.qty, 0);
+      const b1 = document.getElementById('quoteCartCount'); if (b1) b1.textContent = count;
+      const b2 = document.getElementById('quoteCartCountMobile'); if (b2) b2.textContent = count;
+
+      const box = document.getElementById('quoteItemsContainer');
+      if (box) {
+        box.innerHTML = state.quoteCart.length
+          ? state.quoteCart.map((i, idx) => `
+              <div class="p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs flex items-center justify-between gap-2">
+                <div class="truncate"><strong class="text-white">${escapeHTML(i.name)}</strong> <span class="text-slate-400 font-mono">x${i.qty}</span></div>
+                <div class="flex items-center gap-2 shrink-0">
+                  <strong class="text-emerald-400 font-mono">$${(i.price * i.qty).toFixed(2)}</strong>
+                  <button type="button" onclick="removeQuoteItem(${idx})" class="text-rose-400 hover:text-rose-300 cursor-pointer"><i class="fa-solid fa-trash"></i></button>
+                </div>
+              </div>`).join('')
+          : `<p class="text-xs text-slate-500 text-center py-4">Tu cotización está vacía. Agrega servicios o equipos.</p>`;
+      }
+      const tot = state.quoteCart.reduce((a, b) => a + b.price * b.qty, 0);
+      document.getElementById('quoteTotalUsd').textContent = `$${tot.toFixed(2)}`;
+      document.getElementById('quoteTotalVes').textContent = `${(tot * state.bcvRate).toFixed(2)} Bs`;
+      document.getElementById('quoteTotalCop').textContent = `${Math.round(tot * state.copRate).toLocaleString('es-CO')} COP`;
+    }
+
+    async function submitPublicQuote(e) {
+      e.preventDefault();
+      const name = document.getElementById('qClientName').value.trim();
+      const phone = document.getElementById('qClientPhone').value.trim();
+      const email = document.getElementById('qClientEmail').value.trim();
+      const tot = state.quoteCart.reduce((a, b) => a + b.price * b.qty, 0);
+      const quoteObj = {
+        id: 'COT-' + Math.floor(1000 + Math.random() * 9000),
+        date: new Date().toLocaleDateString(),
+        client: name, phone, email,
+        items: [...state.quoteCart],
+        totalUsd: tot
+      };
+      state.quotes.unshift(quoteObj);
+      persistState();
+      try {
+        await fetch('/api/quotes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(quoteObj) });
+      } catch (err) {}
+      const lines = state.quoteCart.map(i => `• ${i.name} (x${i.qty}): $${(i.price * i.qty).toFixed(2)}`).join('\n');
+      const msg = `⚡ *COTIZACIÓN CLOUD360 OS (${quoteObj.id})* ⚡\n\n👤 *Cliente:* ${name}\n📋 *Detalle:*\n${lines}\n\n💰 *Total:* $${tot.toFixed(2)} USD | Bs. ${(tot * state.bcvRate).toFixed(2)} BCV | $${Math.round(tot * state.copRate).toLocaleString('es-CO')} COP`;
+      window.open(`https://wa.me/${COMPANY_WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
+      closeQuoteModal();
+    }
+
+    // RASTREO DE ÓRDENES & ESCÁNER
+    function getOrderPaidUsd(ord) {
+      return (ord.payments || []).reduce((acc, p) => acc + Number(p.usdAmount || p.amountUsd || 0), 0);
+    }
+    function getOrderBalanceUsd(ord) {
+      return Math.max(0, Number(ord.cost || 0) - getOrderPaidUsd(ord));
+    }
+
+    function togglePublicQrScanner() {
+      document.getElementById('publicScannerContainer').classList.toggle('hidden');
+    }
+    function stopPublicScanner() {
+      document.getElementById('publicScannerContainer').classList.add('hidden');
+    }
+    function simulateBarcodeScan(code) {
+      document.getElementById('trackQueryInput').value = code;
+      stopPublicScanner();
+      handlePublicTrack({ preventDefault: () => {} });
+    }
+
+    async function handlePublicTrack(e) {
+      e.preventDefault();
+      const raw = document.getElementById('trackQueryInput').value.trim();
+      const q = raw.toLowerCase();
+      let ord = state.orders.find(o => o.id.toLowerCase() === q || (o.ci && o.ci.toLowerCase() === q));
+      if (!ord && raw.length >= 3) {
+        try {
+          const res = await fetch(`/api/orders/${encodeURIComponent(raw)}`);
+          if (res && res.ok) ord = await res.json();
+        } catch (err) {}
+      }
+      const box = document.getElementById('trackResultBox');
+      box.classList.remove('hidden');
+      if (ord) {
+        const paid = getOrderPaidUsd(ord);
+        const bal = getOrderBalanceUsd(ord);
+        box.innerHTML = `
+          <div class="p-5 rounded-2xl bg-slate-950 border border-sky-500/40 space-y-3 text-xs">
+            <div class="flex flex-wrap justify-between items-start gap-2 border-b border-slate-800 pb-3">
+              <div>
+                <span class="font-mono font-bold text-sky-400">${escapeHTML(ord.id)}</span>
+                <h4 class="text-base font-extrabold text-white">${escapeHTML(ord.client)}</h4>
+              </div>
+              <span class="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-bold">${escapeHTML(ord.status)}</span>
+            </div>
+            <p class="text-slate-300"><strong class="text-white">Servicio:</strong> ${escapeHTML(ord.description)}</p>
+            <p class="text-slate-300"><strong class="text-sky-400">Diagnóstico:</strong> ${escapeHTML(ord.diagnosis || 'En evaluación técnica')}</p>
+            <div class="grid grid-cols-3 gap-2 p-3 rounded-xl bg-slate-900 border border-slate-800 font-mono text-center">
+              <div><span class="block text-[10px] text-slate-400">TOTAL</span><strong class="text-white">$${Number(ord.cost).toFixed(2)}</strong></div>
+              <div><span class="block text-[10px] text-slate-400">ABONADO</span><strong class="text-emerald-400">$${paid.toFixed(2)}</strong></div>
+              <div><span class="block text-[10px] text-slate-400">SALDO</span><strong class="text-amber-400">$${bal.toFixed(2)}</strong></div>
+            </div>
+          </div>`;
+      } else {
+        box.innerHTML = `<div class="p-4 rounded-2xl bg-slate-950 border border-rose-500/40 text-xs text-rose-300 text-center font-semibold">No se encontró ninguna orden con "${escapeHTML(raw)}".</div>`;
+      }
+    }
+
+    // RENDERIZADO COMPLETO DEL PANEL ADMINISTRATIVO
+    function renderAdminAll() {
+      const totalFacturado = state.orders.reduce((a, o) => a + Number(o.cost || 0), 0);
+      const totalAbonado = state.orders.reduce((a, o) => a + getOrderPaidUsd(o), 0);
+      const saldoPendiente = Math.max(0, totalFacturado - totalAbonado);
+
+      const kpiBox = document.getElementById('dashboardKpis');
+      if (kpiBox) {
+        kpiBox.innerHTML = `
+          <div class="glass-panel p-5 rounded-2xl"><span class="text-xs text-slate-400">Total Facturado</span><strong class="block text-2xl font-black text-white mt-1 font-mono">$${totalFacturado.toFixed(2)}</strong><span class="text-[11px] text-sky-400">${state.orders.length} órdenes activas</span></div>
+          <div class="glass-panel p-5 rounded-2xl"><span class="text-xs text-slate-400">Ingresos / Abonos</span><strong class="block text-2xl font-black text-emerald-400 mt-1 font-mono">$${totalAbonado.toFixed(2)}</strong><span class="text-[11px] text-slate-400">Bs. ${(totalAbonado * state.bcvRate).toFixed(2)} BCV</span></div>
+          <div class="glass-panel p-5 rounded-2xl"><span class="text-xs text-slate-400">Por Cobrar</span><strong class="block text-2xl font-black text-amber-400 mt-1 font-mono">$${saldoPendiente.toFixed(2)}</strong><span class="text-[11px] text-slate-400">$${Math.round(saldoPendiente * state.copRate).toLocaleString('es-CO')} COP</span></div>
+          <div class="glass-panel p-5 rounded-2xl"><span class="text-xs text-slate-400">Equipos en Stock</span><strong class="block text-2xl font-black text-sky-400 mt-1 font-mono">${state.inventory.reduce((a, i) => a + Number(i.stock || 0), 0)} uds</strong><span class="text-[11px] text-slate-400">${state.inventory.length} referencias</span></div>
+        `;
+      }
+
+      const recOrd = document.getElementById('dashboardRecentOrders');
+      if (recOrd) {
+        recOrd.innerHTML = state.orders.slice(0, 5).map(o => `
+          <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between gap-2">
+            <div><strong class="text-sky-400 font-mono">${escapeHTML(o.id)}</strong> • <strong class="text-white">${escapeHTML(o.client)}</strong><span class="block text-slate-400 truncate max-w-xs">${escapeHTML(o.description)}</span></div>
+            <button type="button" onclick="openInvoiceModal('${escapeHTML(o.id)}')" class="px-2.5 py-1.5 rounded-lg bg-sky-500/20 text-sky-300 font-bold cursor-pointer">Factura</button>
+          </div>`).join('');
+      }
+
+      const recVis = document.getElementById('dashboardRecentVisits');
+      if (recVis) {
+        recVis.innerHTML = state.visits.slice(0, 5).map(v => `
+          <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between gap-2">
+            <div><strong class="text-white">${escapeHTML(v.client)}</strong> <span class="text-emerald-400 font-mono">(${escapeHTML(v.date)})</span><span class="block text-slate-400">${escapeHTML(v.work)}</span></div>
+            <button type="button" onclick="openVisitModal('${escapeHTML(v.id)}')" class="px-2.5 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 font-bold cursor-pointer">Ficha</button>
+          </div>`).join('');
+      }
+
+      filterAdminOrdersTable(document.getElementById('adminOrdersFilterInput')?.value || '');
+      if (false) {
+        const ordBody = document.getElementById('adminOrdersTableBody');
+        ordBody.innerHTML = state.orders.map(o => {
+          const paid = getOrderPaidUsd(o);
+          const bal = getOrderBalanceUsd(o);
+          return `<tr class="hover:bg-slate-900/50 transition">
+            <td class="p-4 font-mono text-sky-400 font-bold">${escapeHTML(o.id)}<span class="block text-[10px] text-slate-500 font-normal">${escapeHTML(o.date || '')}</span></td>
+            <td class="p-4"><strong class="text-white block">${escapeHTML(o.client)}</strong><span class="text-slate-400 font-mono">${escapeHTML(o.ci || '')} • ${escapeHTML(o.phone || '')}</span></td>
+            <td class="p-4"><span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold text-[10px]">${escapeHTML(o.status)}</span><span class="block text-slate-300 mt-1">${escapeHTML(o.description)}</span></td>
+            <td class="p-4 font-mono">Total: <strong class="text-white">$${Number(o.cost).toFixed(2)}</strong><span class="block text-emerald-400">Abono: $${paid.toFixed(2)}</span><span class="block text-amber-400 font-bold">Saldo: $${bal.toFixed(2)}</span></td>
+            <td class="p-4 text-right">
+              <div class="inline-flex flex-wrap justify-end gap-1.5">
+                <button type="button" onclick="openInvoiceModal('${escapeHTML(o.id)}')" class="px-2.5 py-1.5 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 font-bold cursor-pointer"><i class="fa-solid fa-qrcode mr-1"></i>Factura</button>
+                <button type="button" onclick="openEditOrderModal('${escapeHTML(o.id)}')" class="px-2.5 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold cursor-pointer"><i class="fa-solid fa-pen"></i></button>
+                <button type="button" onclick="notifyOrderWhatsApp('${escapeHTML(o.id)}')" class="px-2.5 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-bold cursor-pointer"><i class="fa-brands fa-whatsapp"></i></button>
+                <button type="button" onclick="deleteOrder('${escapeHTML(o.id)}')" class="px-2.5 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 font-bold cursor-pointer"><i class="fa-solid fa-trash"></i></button>
+              </div>
+            </td>
+          </tr>`;
+        }).join('');
+      }
+
+      const quotesBox = document.getElementById('adminQuotesList');
+      if (quotesBox) {
+        quotesBox.innerHTML = state.quotes.length
+          ? state.quotes.map(q => {
+              const itemsList = Array.isArray(q.items) && q.items.length
+                ? q.items.map(it => `<li class="flex justify-between gap-2 text-[11px] text-slate-300"><span>• ${escapeHTML(it.name)} <span class="text-slate-500 font-mono">(x${it.qty || 1})</span></span><span class="font-mono text-slate-200">$${(Number(it.price || 0) * Number(it.qty || 1)).toFixed(2)}</span></li>`).join('')
+                : `<li class="text-[11px] text-slate-500">Sin desglose de ítems registrado</li>`;
+              const statusBadge = q.invoicedOrderId
+                ? `<span class="px-2.5 py-1 rounded-lg bg-sky-500/20 border border-sky-500/40 text-sky-300 font-bold text-[11px] font-mono"><i class="fa-solid fa-check-circle mr-1"></i>Facturada (${escapeHTML(q.invoicedOrderId)})</span>`
+                : `<button type="button" onclick="convertQuoteToOrder('${escapeHTML(q.id)}')" class="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs flex items-center gap-1.5 transition cursor-pointer"><i class="fa-solid fa-file-invoice-dollar"></i> Pasar a Facturar</button>`;
+              return `<div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-2.5">
+                  <div>
+                    <strong class="text-sky-400 font-mono">${escapeHTML(q.id)}</strong> - <strong class="text-white">${escapeHTML(q.client)}</strong> <span class="text-slate-400">(${escapeHTML(q.phone || '')})</span>
+                    <span class="block text-[11px] text-slate-400">Fecha: ${escapeHTML(q.date)} ${q.email ? '• ' + escapeHTML(q.email) : ''}</span>
+                  </div>
+                  <div class="flex flex-wrap items-center gap-2.5">
+                    <div class="text-right font-mono">
+                      <strong class="text-emerald-400 text-sm block">$${Number(q.totalUsd).toFixed(2)} USD</strong>
+                      <span class="text-[10px] text-slate-400">Bs. ${(Number(q.totalUsd) * state.bcvRate).toFixed(2)} • $${Math.round(Number(q.totalUsd) * state.copRate).toLocaleString('es-CO')} COP</span>
+                    </div>
+                    ${statusBadge}
+                    ${q.invoicedOrderId ? `<button type="button" onclick="openInvoiceModal('${escapeHTML(q.invoicedOrderId)}')" class="px-3 py-1.5 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 font-bold text-xs cursor-pointer"><i class="fa-solid fa-qrcode mr-1"></i>Ver Factura</button>` : ''}
+                    <button type="button" onclick="deleteQuote('${escapeHTML(q.id)}')" title="Eliminar cotización" class="px-2.5 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/30 text-rose-300 text-xs cursor-pointer"><i class="fa-solid fa-trash"></i></button>
+                  </div>
+                </div>
+                <div class="bg-slate-900/70 rounded-xl p-3 border border-slate-800/60 space-y-1.5">
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-sky-400 block">Detalle de Servicios / Equipos Cotizados:</span>
+                  <ul class="space-y-1">${itemsList}</ul>
+                </div>
+              </div>`;
+            }).join('')
+          : `<p class="text-slate-400">Aún no hay cotizaciones registradas.</p>`;
+      }
+
+      filterAdminInventory(document.getElementById('barcodeScannerInput')?.value || '');
+
+      const visGrid = document.getElementById('adminVisitsGrid');
+      if (visGrid) {
+        visGrid.innerHTML = state.visits.map(v => `
+          <div class="glass-panel rounded-2xl p-4 border border-slate-800 space-y-2">
+            <div class="flex justify-between items-center"><strong class="text-white text-sm">${escapeHTML(v.client)}</strong><span class="text-xs px-2.5 py-0.5 rounded-full bg-sky-500/20 text-sky-300 font-bold">${escapeHTML(v.status || 'Pendiente')}</span></div>
+            <p class="text-xs text-slate-400"><i class="fa-solid fa-location-dot text-rose-400 mr-1"></i>${escapeHTML(v.address)} • ${escapeHTML(v.date)}</p>
+            <p class="text-xs text-slate-200">${escapeHTML(v.work)}</p>
+            <div class="pt-2 flex justify-end"><button type="button" onclick="openVisitModal('${escapeHTML(v.id)}')" class="px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-300 font-bold text-xs cursor-pointer">Abrir Ficha Técnica</button></div>
+          </div>`).join('');
+      }
+
+      const accBody = document.getElementById('adminAccountingTableBody');
+      if (accBody) {
+        accBody.innerHTML = state.accounting.map(a => `<tr><td class="p-4 font-mono text-slate-400">${escapeHTML(a.date)}</td><td class="p-4 font-bold ${a.type === 'Ingreso' ? 'text-emerald-400' : 'text-rose-400'}">${escapeHTML(a.type)}</td><td class="p-4 text-white">${escapeHTML(a.desc)}</td><td class="p-4 text-right font-mono font-bold ${a.type === 'Ingreso' ? 'text-emerald-400' : 'text-rose-400'}">${a.type === 'Ingreso' ? '+' : '-'}$${Number(a.amount).toFixed(2)}</td></tr>`).join('');
+      }
+
+      const sldList = document.getElementById('adminSlidesList');
+      if (sldList) {
+        sldList.innerHTML = state.slides.map((s, idx) => `<div class="glass-panel rounded-2xl overflow-hidden border border-slate-800"><img src="${escapeHTML(s.image)}" class="w-full h-32 object-cover" /><div class="p-3 space-y-1"><span class="text-[10px] text-sky-400 font-bold">${escapeHTML(s.badge)}</span><strong class="block text-xs text-white">${escapeHTML(s.title)}</strong><button type="button" onclick="removeHeroSlide(${idx})" class="text-[11px] text-rose-400 hover:underline pt-1 cursor-pointer">Eliminar banner</button></div></div>`).join('');
+      }
+    }
+
+    function filterAdminOrdersTable(query) {
+      const q = String(query || '').trim().toLowerCase();
+      const ordBody = document.getElementById('adminOrdersTableBody');
+      if (!ordBody) return;
+      const list = state.orders.filter(o =>
+        !q ||
+        String(o.id || '').toLowerCase().includes(q) ||
+        String(o.client || '').toLowerCase().includes(q) ||
+        String(o.ci || '').toLowerCase().includes(q) ||
+        String(o.status || '').toLowerCase().includes(q) ||
+        String(o.description || '').toLowerCase().includes(q)
+      );
+      ordBody.innerHTML = list.length ? list.map(o => {
+        const paid = getOrderPaidUsd(o);
+        const bal = getOrderBalanceUsd(o);
+        return `<tr class="hover:bg-slate-900/50 transition">
+          <td class="p-4 font-mono text-sky-400 font-bold">${escapeHTML(o.id)}<span class="block text-[10px] text-slate-500 font-normal">${escapeHTML(o.date || '')}</span></td>
+          <td class="p-4"><strong class="text-white block">${escapeHTML(o.client)}</strong><span class="text-slate-400 font-mono">${escapeHTML(o.ci || '')} • ${escapeHTML(o.phone || '')}</span></td>
+          <td class="p-4"><span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold text-[10px]">${escapeHTML(o.status)}</span><span class="block text-slate-300 mt-1">${escapeHTML(o.description)}</span></td>
+          <td class="p-4 font-mono">Total: <strong class="text-white">$${Number(o.cost).toFixed(2)}</strong><span class="block text-emerald-400">Abono: $${paid.toFixed(2)}</span><span class="block text-amber-400 font-bold">Saldo: $${bal.toFixed(2)}</span></td>
+          <td class="p-4 text-right">
+            <div class="inline-flex flex-wrap justify-end gap-1.5">
+              <button type="button" onclick="openInvoiceModal('${escapeHTML(o.id)}')" class="px-2.5 py-1.5 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 font-bold cursor-pointer"><i class="fa-solid fa-qrcode mr-1"></i>Factura</button>
+              <button type="button" onclick="openEditOrderModal('${escapeHTML(o.id)}')" class="px-2.5 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold cursor-pointer"><i class="fa-solid fa-pen"></i></button>
+              <button type="button" onclick="notifyOrderWhatsApp('${escapeHTML(o.id)}')" class="px-2.5 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-bold cursor-pointer"><i class="fa-brands fa-whatsapp"></i></button>
+              <button type="button" onclick="deleteOrder('${escapeHTML(o.id)}')" class="px-2.5 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 font-bold cursor-pointer"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          </td>
+        </tr>`;
+      }).join('') : `<tr><td colspan="5" class="p-5 text-center text-slate-400">No hay órdenes que coincidan con "${escapeHTML(query)}".</td></tr>`;
+    }
+
+    function handleAdminUnifiedSearch(rawQuery) {
+      const box = document.getElementById('adminUnifiedSearchResults');
+      if (!box) return;
+      const q = String(rawQuery || '').trim().toLowerCase();
+      if (!q) {
+        box.innerHTML = '';
+        box.classList.add('hidden');
+        return;
+      }
+      box.classList.remove('hidden');
+
+      const matchedOrders = state.orders.filter(o =>
+        String(o.id || '').toLowerCase().includes(q) ||
+        String(o.client || '').toLowerCase().includes(q) ||
+        String(o.ci || '').toLowerCase().includes(q) ||
+        String(o.phone || '').toLowerCase().includes(q) ||
+        String(o.description || '').toLowerCase().includes(q)
+      );
+      const matchedQuotes = state.quotes.filter(qt =>
+        String(qt.id || '').toLowerCase().includes(q) ||
+        String(qt.client || '').toLowerCase().includes(q) ||
+        String(qt.phone || '').toLowerCase().includes(q)
+      );
+      const matchedInv = state.inventory.filter(it =>
+        String(it.sku || '').toLowerCase().includes(q) ||
+        String(it.name || '').toLowerCase().includes(q) ||
+        String(it.category || '').toLowerCase().includes(q)
+      );
+
+      if (!matchedOrders.length && !matchedQuotes.length && !matchedInv.length) {
+        box.innerHTML = `<div class="p-3 rounded-xl bg-slate-950 border border-rose-500/40 text-xs text-rose-300">Sin coincidencias para "${escapeHTML(rawQuery)}" en órdenes, cotizaciones ni inventario.</div>`;
+        return;
+      }
+
+      let htmlRes = '';
+      htmlRes += matchedOrders.map(o => {
+        const paid = getOrderPaidUsd(o);
+        const bal = getOrderBalanceUsd(o);
+        return `<div class="p-3.5 rounded-xl bg-slate-950 border border-sky-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
+          <div>
+            <span class="px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 font-bold text-[10px] mr-1.5">ORDEN</span>
+            <strong class="text-sky-400 font-mono">${escapeHTML(o.id)}</strong> • <strong class="text-white">${escapeHTML(o.client)}</strong> <span class="text-slate-400 font-mono">(${escapeHTML(o.ci || '')})</span>
+            <span class="block text-slate-300 mt-1">${escapeHTML(o.description)} — <strong class="text-emerald-400">${escapeHTML(o.status)}</strong></span>
+            <span class="block text-[11px] font-mono text-slate-400 mt-0.5">Total: $${Number(o.cost).toFixed(2)} | Abono: $${paid.toFixed(2)} | Saldo: <strong class="text-amber-400">$${bal.toFixed(2)} USD</strong></span>
+          </div>
+          <div class="flex flex-wrap gap-1.5 shrink-0">
+            <button type="button" onclick="openInvoiceModal('${escapeHTML(o.id)}')" class="px-3 py-1.5 rounded-lg bg-sky-500 text-slate-950 font-extrabold cursor-pointer"><i class="fa-solid fa-qrcode mr-1"></i>Factura</button>
+            <button type="button" onclick="openEditOrderModal('${escapeHTML(o.id)}')" class="px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 font-bold cursor-pointer"><i class="fa-solid fa-pen mr-1"></i>Editar</button>
+            <button type="button" onclick="notifyOrderWhatsApp('${escapeHTML(o.id)}')" class="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 font-bold cursor-pointer"><i class="fa-brands fa-whatsapp"></i></button>
+          </div>
+        </div>`;
+      }).join('');
+
+      htmlRes += matchedQuotes.map(qt => `
+        <div class="p-3.5 rounded-xl bg-slate-950 border border-emerald-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+          <div>
+            <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold text-[10px] mr-1.5">COTIZACIÓN</span>
+            <strong class="text-emerald-400 font-mono">${escapeHTML(qt.id)}</strong> • <strong class="text-white">${escapeHTML(qt.client)}</strong>
+            <span class="block text-slate-400 font-mono mt-0.5">Total: $${Number(qt.totalUsd).toFixed(2)} USD</span>
+          </div>
+          <div class="flex gap-1.5">
+            ${qt.invoicedOrderId
+              ? `<button type="button" onclick="openInvoiceModal('${escapeHTML(qt.invoicedOrderId)}')" class="px-3 py-1.5 rounded-lg bg-sky-500/20 text-sky-300 font-bold cursor-pointer">Ver Factura (${escapeHTML(qt.invoicedOrderId)})</button>`
+              : `<button type="button" onclick="convertQuoteToOrder('${escapeHTML(qt.id)}')" class="px-3 py-1.5 rounded-lg bg-emerald-500 text-slate-950 font-extrabold cursor-pointer">Pasar a Facturar</button>`}
+          </div>
+        </div>`).join('');
+
+      htmlRes += matchedInv.map(it => `
+        <div class="p-3.5 rounded-xl bg-slate-950 border border-amber-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+          <div>
+            <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold text-[10px] mr-1.5">INVENTARIO</span>
+            <strong class="text-amber-400 font-mono">${escapeHTML(it.sku)}</strong> • <strong class="text-white">${escapeHTML(it.name)}</strong>
+            <span class="block text-slate-400 font-mono mt-0.5">Precio: $${Number(it.price).toFixed(2)} USD (Bs. ${(Number(it.price) * state.bcvRate).toFixed(2)}) • Stock: ${it.stock} uds</span>
+          </div>
+          <button type="button" onclick="openEditInventoryModal('${escapeHTML(it.id)}')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-sky-300 font-bold cursor-pointer">Editar Equipo</button>
+        </div>`).join('');
+
+      box.innerHTML = htmlRes;
+    }
+
+    // CONVERSIÓN DE COTIZACIÓN A ORDEN / FACTURA
+    async function convertQuoteToOrder(quoteId) {
+      const q = state.quotes.find(x => x.id === quoteId);
+      if (!q) return;
+      if (q.invoicedOrderId && state.orders.some(o => o.id === q.invoicedOrderId)) {
+        openInvoiceModal(q.invoicedOrderId);
+        return;
+      }
+      const orderItems = (Array.isArray(q.items) && q.items.length)
+        ? q.items.map(it => ({ name: it.name, source: 'Taller', qty: Number(it.qty || 1), price: Number(it.price || 0) }))
+        : [{ name: `Cotización ${q.id}`, source: 'Taller', qty: 1, price: Number(q.totalUsd || 0) }];
+      const totalCost = orderItems.reduce((acc, it) => acc + it.price * it.qty, 0) || Number(q.totalUsd || 0);
+      const descSummary = orderItems.map(it => `${it.name} (x${it.qty})`).join(' + ');
+
+      const newOrd = {
+        id: 'ORD-' + Math.floor(1000 + Math.random() * 9000),
+        date: new Date().toLocaleDateString(),
+        sla: 'Urgente (24h)',
+        client: q.client || 'Cliente Cotización',
+        ci: q.ci || 'N/A',
+        phone: q.phone || '',
+        email: q.email || '',
+        category: 'Proyectos & Cotizaciones',
+        description: descSummary,
+        status: 'EN PROGRESO - PROCEDE REPARACIÓN',
+        proceeds: 'Procede reparación / Puede pasar a retirar',
+        diagnosis: `Generado desde cotización ${q.id}`,
+        cost: Number(totalCost.toFixed(2)),
+        currency: 'USD',
+        items: orderItems,
+        payments: []
+      };
+
+      state.orders.unshift(newOrd);
+      q.invoicedOrderId = newOrd.id;
+      persistState();
+      await pushOrderToBackend(newOrd, false);
+      renderAdminAll();
+      openInvoiceModal(newOrd.id);
+      showToast(`Cotización ${q.id} convertida en Factura ${newOrd.id}`);
+    }
+
+    function deleteQuote(quoteId) {
+      state.quotes = state.quotes.filter(x => x.id !== quoteId);
+      persistState();
+      renderAdminAll();
+      showToast(`Cotización ${quoteId} eliminada`);
+    }
+
+    // CRUD ÓRDENES
+    async function createNewOrder(e) {
+      e.preventDefault();
+      const costVal = parseFloat(document.getElementById('ordCost').value || 0);
+      const advVal = parseFloat(document.getElementById('ordAdvance').value || 0);
+      const payments = advVal > 0 ? [{ date: new Date().toLocaleDateString(), method: 'Inicial', currency: 'USD', originalAmount: advVal, usdAmount: advVal, ref: 'INI' }] : [];
+      const ord = {
+        id: 'ORD-' + Math.floor(1000 + Math.random() * 9000),
+        date: new Date().toLocaleDateString(),
+        sla: 'Urgente (24h)',
+        client: document.getElementById('ordClient').value.trim(),
+        ci: document.getElementById('ordCi').value.trim(),
+        phone: document.getElementById('ordPhone').value.trim(),
+        email: document.getElementById('ordEmail').value.trim(),
+        category: document.getElementById('ordCategory').value,
+        description: document.getElementById('ordDesc').value.trim(),
+        status: 'RECIBIDO',
+        proceeds: 'En revisión técnica - Aún no pasar',
+        diagnosis: '',
+        cost: costVal,
+        currency: document.getElementById('ordCurrency').value,
+        items: [{ name: document.getElementById('ordDesc').value.trim(), source: 'Taller', qty: 1, price: costVal }],
+        payments
+      };
+      state.orders.unshift(ord);
+      if (advVal > 0) {
+        state.accounting.unshift({ id: 'ACC-' + Date.now(), date: new Date().toLocaleDateString(), type: 'Ingreso', desc: `Abono Inicial ${ord.id} - ${ord.client}`, amount: advVal });
+      }
+      persistState();
+      await pushOrderToBackend(ord, false);
+      e.target.reset();
+      renderAdminAll();
+      openInvoiceModal(ord.id);
+    }
+
+    function openEditOrderModal(id) {
+      const ord = state.orders.find(o => o.id === id);
+      if (!ord) return;
+      editingOrderId = id;
+      document.getElementById('editOrderModalTitle').textContent = `Editar Orden ${ord.id}`;
+      document.getElementById('editOrdClient').value = ord.client || '';
+      document.getElementById('editOrdCi').value = ord.ci || '';
+      document.getElementById('editOrdPhone').value = ord.phone || '';
+      document.getElementById('editOrdEmail').value = ord.email || '';
+      document.getElementById('editOrdStatus').value = ord.status || 'RECIBIDO';
+      document.getElementById('editOrdProceeds').value = ord.proceeds || 'En revisión técnica - Aún no pasar';
+      document.getElementById('editOrdDiagnosis').value = ord.diagnosis || '';
+      editingOrderItemsDraft = JSON.parse(JSON.stringify(ord.items || []));
+      renderEditingOrderItems();
+      document.getElementById('editOrderModal').classList.remove('hidden');
+    }
+    function closeEditOrderModal() { document.getElementById('editOrderModal').classList.add('hidden'); }
+
+    function addItemToEditingOrder() {
+      const name = document.getElementById('newItemName').value.trim();
+      const source = document.getElementById('newItemSource').value;
+      const price = parseFloat(document.getElementById('newItemPrice').value || 0);
+      if (!name) return;
+      editingOrderItemsDraft.push({ name, source, qty: 1, price });
+      document.getElementById('newItemName').value = '';
+      document.getElementById('newItemPrice').value = '';
+      renderEditingOrderItems();
+    }
+
+    function renderEditingOrderItems() {
+      const box = document.getElementById('editOrdItemsList');
+      if (!box) return;
+      box.innerHTML = editingOrderItemsDraft.map((it, idx) => `
+        <div class="p-2 rounded-xl bg-slate-900 border border-slate-800 flex justify-between items-center">
+          <span><strong class="text-sky-400">[${escapeHTML(it.source || 'Taller')}]</strong> ${escapeHTML(it.name)}</span>
+          <div class="flex items-center gap-2"><strong class="text-emerald-400 font-mono">$${Number(it.price).toFixed(2)}</strong><button type="button" onclick="editingOrderItemsDraft.splice(${idx},1);renderEditingOrderItems()" class="text-rose-400 cursor-pointer"><i class="fa-solid fa-xmark"></i></button></div>
+        </div>`).join('');
+    }
+
+    async function saveEditedOrder(e, notify = false) {
+      if (e) e.preventDefault();
+      const ord = state.orders.find(o => o.id === editingOrderId);
+      if (!ord) return;
+      ord.client = document.getElementById('editOrdClient').value.trim();
+      ord.ci = document.getElementById('editOrdCi').value.trim();
+      ord.phone = document.getElementById('editOrdPhone').value.trim();
+      ord.email = document.getElementById('editOrdEmail').value.trim();
+      ord.status = document.getElementById('editOrdStatus').value;
+      ord.proceeds = document.getElementById('editOrdProceeds').value;
+      ord.diagnosis = document.getElementById('editOrdDiagnosis').value.trim();
+      ord.items = [...editingOrderItemsDraft];
+      if (ord.items.length > 0) {
+        ord.cost = ord.items.reduce((a, b) => a + Number(b.price || 0) * Number(b.qty || 1), 0);
+      }
+      persistState();
+      await pushOrderToBackend(ord, notify);
+      renderAdminAll();
+      closeEditOrderModal();
+      showToast(`Orden ${ord.id} actualizada`);
+    }
+
+    async function saveAndMarkReadyWithAlerts() {
+      document.getElementById('editOrdStatus').value = 'LISTO PARA RETIRAR';
+      document.getElementById('editOrdProceeds').value = 'Procede reparación / Puede pasar a retirar';
+      const id = editingOrderId;
+      await saveEditedOrder(null, true);
+      notifyOrderWhatsApp(id);
+    }
+
+    function notifyOrderWhatsApp(id) {
+      const ord = state.orders.find(o => o.id === id);
+      if (!ord) return;
+      const bal = getOrderBalanceUsd(ord);
+      const msg = `⚡ *CLOUD360 OS - ACTUALIZACIÓN DE ORDEN* ⚡\n\n*Ticket:* ${ord.id}\n*Cliente:* ${ord.client}\n*Estado:* ${ord.status}\n*Dictamen:* ${ord.proceeds || ''}\n*Diagnóstico:* ${ord.diagnosis || ord.description}\n*Saldo Pendiente:* $${bal.toFixed(2)} USD (Bs. ${(bal * state.bcvRate).toFixed(2)} BCV)`;
+      window.open(`https://wa.me/${String(ord.phone || '').replace(/[^0-9]/g, '')}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
+    }
+
+    async function deleteOrder(id) {
+      state.orders = state.orders.filter(o => o.id !== id);
+      persistState();
+      const token = sessionStorage.getItem(ADMIN_SESSION_KEY);
+      if (token) {
+        try { await fetch(`/api/orders/${encodeURIComponent(id)}`, { method: 'DELETE', headers: { 'X-Admin-Token': token } }); } catch (e) {}
+      }
+      renderAdminAll();
+      showToast(`Orden ${id} eliminada`);
+    }
+
+    // FACTURA OFICIAL Y ABONOS
+    function openInvoiceModal(id) {
+      const ord = state.orders.find(o => o.id === id);
+      if (!ord) return;
+      activeInvoiceOrderId = id;
+      document.getElementById('invDate').textContent = ord.date || '';
+      document.getElementById('invSla').textContent = `SLA: ${ord.sla || 'Urgente (24h)'}`;
+      document.getElementById('invClientName').textContent = ord.client;
+      document.getElementById('invClientCi').textContent = ord.ci;
+      document.getElementById('invClientPhone').textContent = ord.phone;
+      document.getElementById('invStatusBadge').textContent = ord.status;
+      document.getElementById('invProceedsBadge').textContent = ord.proceeds || '';
+      document.getElementById('invDiagnosisText').textContent = ord.diagnosis || ord.description;
+      document.getElementById('invPayCurrency').textContent = ord.currency || 'USD';
+
+      const items = (ord.items && ord.items.length) ? ord.items : [{ name: ord.description, qty: 1, price: ord.cost }];
+      document.getElementById('invItemsTableBody').innerHTML = items.map(it => `
+        <tr><td class="py-2 px-3">${escapeHTML(it.name)}</td><td class="py-2 px-3 text-center">${it.qty || 1}</td><td class="py-2 px-3 text-right font-bold">$${Number(it.price).toFixed(2)}</td></tr>`).join('');
+
+      const paid = getOrderPaidUsd(ord);
+      const bal = getOrderBalanceUsd(ord);
+      document.getElementById('invTotalUsd').textContent = `$${Number(ord.cost).toFixed(2)} USD`;
+      document.getElementById('invPaidUsd').textContent = `-$${paid.toFixed(2)} USD`;
+      document.getElementById('invBalanceUsd').textContent = `$${bal.toFixed(2)} USD`;
+      document.getElementById('invBcvUsed').textContent = Number(state.bcvRate).toFixed(2);
+      document.getElementById('invCopUsed').textContent = Number(state.copRate).toLocaleString('es-CO');
+      document.getElementById('invBalanceVes').textContent = `${(bal * state.bcvRate).toFixed(2)} VES`;
+      document.getElementById('invBalanceCop').textContent = `${Math.round(bal * state.copRate).toLocaleString('es-CO')} COP`;
+      document.getElementById('invQrTicketLabel').textContent = ord.id;
+
+      try { JsBarcode('#invoiceBarcodeSvg', ord.id, { format: 'CODE128', width: 1.5, height: 34, displayValue: true }); } catch (e) {}
+      const qrBox = document.getElementById('invoiceQrContainer');
+      const qrUrl = `${window.location.origin}${window.location.pathname}#rastreo=${encodeURIComponent(ord.id)}`;
+      qrBox.innerHTML = `<img src="${generateLocalQrDataUri(qrUrl)}" alt="QR ${escapeHTML(ord.id)}" style="width:88px;height:88px;" />`;
+
+      const histBody = document.getElementById('invoicePaymentsHistoryBody');
+      if (histBody) {
+        histBody.innerHTML = (ord.payments || []).map(p => `
+          <tr><td class="py-1.5">${escapeHTML(p.date)}</td><td class="py-1.5">${escapeHTML(p.method)}</td><td class="py-1.5 font-mono">${escapeHTML(p.ref)}</td><td class="py-1.5">${p.originalAmount} ${escapeHTML(p.currency)}</td><td class="py-1.5 text-right text-emerald-400 font-bold">$${Number(p.usdAmount).toFixed(2)}</td></tr>`).join('');
+      }
+      document.getElementById('invoiceModal').classList.remove('hidden');
+    }
+    function closeInvoiceModal() { document.getElementById('invoiceModal').classList.add('hidden'); }
+    function printInvoiceNow() { window.print(); }
+
+    function updatePayEquivHint() {
+      const cur = document.getElementById('payCurrencyInput').value;
+      const amt = parseFloat(document.getElementById('payAmountInput').value || 0);
+      let usd = amt;
+      if (cur === 'VES') usd = amt / state.bcvRate;
+      if (cur === 'COP') usd = amt / state.copRate;
+      document.getElementById('payEquivHint').textContent = amt > 0 ? `Equivalente acreditado a la orden: $${usd.toFixed(2)} USD` : '';
+    }
+
+    async function registerInvoicePayment(e) {
+      e.preventDefault();
+      const ord = state.orders.find(o => o.id === activeInvoiceOrderId);
+      if (!ord) return;
+      const method = document.getElementById('payMethodInput').value;
+      const cur = document.getElementById('payCurrencyInput').value;
+      const amt = parseFloat(document.getElementById('payAmountInput').value || 0);
+      const ref = document.getElementById('payRefInput').value.trim();
+      let usd = amt;
+      if (cur === 'VES') usd = amt / state.bcvRate;
+      if (cur === 'COP') usd = amt / state.copRate;
+      usd = Number(usd.toFixed(2));
+
+      if (!Array.isArray(ord.payments)) ord.payments = [];
+      ord.payments.push({ date: new Date().toLocaleDateString(), method, currency: cur, originalAmount: amt, usdAmount: usd, ref });
+      state.accounting.unshift({ id: 'ACC-' + Date.now(), date: new Date().toLocaleDateString(), type: 'Ingreso', desc: `Abono ${ord.id} (${method} ${ref})`, amount: usd });
+      persistState();
+      await pushOrderToBackend(ord, false);
+      e.target.reset();
+      document.getElementById('payEquivHint').textContent = '';
+      renderAdminAll();
+      openInvoiceModal(ord.id);
+      showToast(`Abono de $${usd.toFixed(2)} USD registrado`);
+    }
+
+    function downloadInvoiceFile() {
+      const area = document.getElementById('printableInvoiceArea');
+      if (!area) return;
+      const blob = new Blob([`<!DOCTYPE html><html><head><meta charset="utf-8"><script src="https://cdn.tailwindcss.com"><\/script></head><body class="p-6">${area.outerHTML}</body></html>`], { type: 'text/html' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `Factura_${activeInvoiceOrderId || 'Cloud360'}.html`;
+      a.click();
+    }
+
+    function sendInvoiceEmail() {
+      const ord = state.orders.find(o => o.id === activeInvoiceOrderId);
+      if (!ord) return;
+      const bal = getOrderBalanceUsd(ord);
+      window.location.href = `mailto:${ord.email || 'abcloud360@gmail.com'}?subject=${encodeURIComponent(`Factura Cloud360 OS - ${ord.id}`)}&body=${encodeURIComponent(`Hola ${ord.client}, tu orden ${ord.id} tiene saldo pendiente de $${bal.toFixed(2)} USD.`)}`;
+    }
+
+    function sendInvoiceWhatsApp() {
+      const ord = state.orders.find(o => o.id === activeInvoiceOrderId);
+      if (!ord) return;
+      notifyOrderWhatsApp(ord.id);
+    }
+
+    // INVENTARIO & ESCÁNER
+    function filterAdminInventory(query) {
+      const q = String(query || '').trim().toLowerCase();
+      const body = document.getElementById('adminInventoryTableBody');
+      if (!body) return;
+      const filtered = state.inventory.filter(i => !q || i.name.toLowerCase().includes(q) || (i.sku && i.sku.toLowerCase().includes(q)) || i.category.toLowerCase().includes(q));
+      body.innerHTML = filtered.map(i => `
+        <tr class="hover:bg-slate-900/50 transition">
+          <td class="p-4"><div class="flex items-center gap-2.5"><img src="${escapeHTML(i.image || 'https://placehold.co/80x80/0f172a/38bdf8?text=360')}" class="w-10 h-10 rounded-lg object-cover border border-slate-700" /><span class="font-mono text-sky-400 font-bold">${escapeHTML(i.sku)}</span></div></td>
+          <td class="p-4 font-semibold text-white cursor-pointer hover:text-sky-400" onclick="openEditInventoryModal('${escapeHTML(i.id)}')">${escapeHTML(i.name)}</td>
+          <td class="p-4 text-slate-300">${escapeHTML(i.category)}</td>
+          <td class="p-4 font-mono">$${Number(i.price).toFixed(2)} <span class="text-emerald-400 block text-[11px]">Bs. ${(Number(i.price) * state.bcvRate).toFixed(2)}</span></td>
+          <td class="p-4 font-mono font-bold text-emerald-400">${i.stock} uds</td>
+          <td class="p-4 text-right">
+            <div class="inline-flex items-center gap-1.5">
+              <button type="button" onclick="adjustInventoryStock('${escapeHTML(i.id)}', -1)" class="px-2.5 py-1.5 rounded-lg bg-rose-500/20 text-rose-300 font-bold cursor-pointer">-1</button>
+              <button type="button" onclick="adjustInventoryStock('${escapeHTML(i.id)}', 1)" class="px-2.5 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 font-bold cursor-pointer">+1</button>
+              <button type="button" onclick="openEditInventoryModal('${escapeHTML(i.id)}')" class="px-2.5 py-1.5 rounded-lg bg-sky-500/20 text-sky-300 font-bold cursor-pointer"><i class="fa-solid fa-pen"></i></button>
+            </div>
+          </td>
+        </tr>`).join('');
+    }
+
+    function toggleInventoryBarcodeScanner() { document.getElementById('invScannerBox').classList.toggle('hidden'); }
+    function stopInvScanner() { document.getElementById('invScannerBox').classList.add('hidden'); }
+
+    function handleBarcodeInputSubmit(e) {
+      e.preventDefault();
+      const val = document.getElementById('barcodeScannerInput').value.trim();
+      if (val) processScannedInventoryBarcode(val);
+    }
+
+    async function processScannedInventoryBarcode(code) {
+      const mode = document.getElementById('scannerActionMode').value;
+      const item = state.inventory.find(i => (i.sku && i.sku.toLowerCase() === code.toLowerCase()) || i.name.toLowerCase().includes(code.toLowerCase()));
+      const card = document.getElementById('invPriceLookupCard');
+      if (!item) {
+        showToast(`Código "${code}" no encontrado`, 'error');
+        return;
+      }
+      if (mode === 'ADD') item.stock = Number(item.stock || 0) + 1;
+      if (mode === 'SUB') item.stock = Math.max(0, Number(item.stock || 0) - 1);
+      if (mode !== 'CONSULT') {
+        persistState();
+        await pushInventoryToBackend(item);
+        renderAdminAll();
+        renderCatalog();
+      }
+      if (card) {
+        card.classList.remove('hidden');
+        card.innerHTML = `
+          <div><span class="text-xs font-mono text-sky-400">${escapeHTML(item.sku)}</span><strong class="block text-base text-white">${escapeHTML(item.name)}</strong><span class="text-xs text-slate-400">Stock disponible: ${item.stock} uds</span></div>
+          <div class="text-right font-mono"><strong class="text-xl text-emerald-400 block">$${Number(item.price).toFixed(2)} USD</strong><span class="text-xs text-amber-400">Bs. ${(item.price * state.bcvRate).toFixed(2)} • $${Math.round(item.price * state.copRate).toLocaleString('es-CO')} COP</span></div>`;
+      }
+    }
+
+    async function adjustInventoryStock(id, delta) {
+      const item = state.inventory.find(i => i.id === id);
+      if (!item) return;
+      item.stock = Math.max(0, Number(item.stock || 0) + delta);
+      persistState();
+      await pushInventoryToBackend(item);
+      renderAdminAll();
+      renderCatalog();
+    }
+
+    function previewNewInvFile(e) {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        newInvUploadedDataUrl = String(reader.result || '');
+        document.getElementById('newInvPreviewImg').src = newInvUploadedDataUrl;
+        document.getElementById('invFileLabel').textContent = file.name.slice(0, 14);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function addInventoryItem(e) {
+      e.preventDefault();
+      const item = {
+        id: 'INV-' + Date.now(),
+        sku: document.getElementById('invSku').value.trim() || ('SKU-' + Math.floor(1000 + Math.random() * 9000)),
+        name: document.getElementById('invName').value.trim(),
+        category: document.getElementById('invCategory').value.trim(),
+        price: parseFloat(document.getElementById('invPrice').value || 0),
+        stock: parseInt(document.getElementById('invStock').value || 0, 10),
+        visible: true,
+        image: newInvUploadedDataUrl || document.getElementById('invImage').value.trim() || 'https://placehold.co/600x400/0f172a/38bdf8?text=Cloud360'
+      };
+      newInvUploadedDataUrl = '';
+      state.inventory.unshift(item);
+      persistState();
+      await pushInventoryToBackend(item);
+      e.target.reset();
+      renderServicesDropdown();
+      renderCatalog();
+      renderAdminAll();
+      showToast('Equipo agregado al inventario');
+    }
+
+    function openEditInventoryModal(id) {
+      const it = state.inventory.find(i => i.id === id);
+      if (!it) return;
+      editingInvId = id;
+      document.getElementById('editInvPreviewImg').src = it.image || '';
+      document.getElementById('editInvImage').value = it.image || '';
+      document.getElementById('editInvSku').value = it.sku || '';
+      document.getElementById('editInvCategory').value = it.category || '';
+      document.getElementById('editInvName').value = it.name || '';
+      document.getElementById('editInvPrice').value = Number(it.price || 0).toFixed(2);
+      document.getElementById('editInvStock').value = Number(it.stock || 0);
+      document.getElementById('editInvVisible').value = it.visible === false ? 'false' : 'true';
+      document.getElementById('editInventoryModal').classList.remove('hidden');
+    }
+    function closeEditInventoryModal() { document.getElementById('editInventoryModal').classList.add('hidden'); }
+
+    function handleEditInvPhotoFile(e) {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        document.getElementById('editInvImage').value = String(reader.result || '');
+        document.getElementById('editInvPreviewImg').src = String(reader.result || '');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function saveEditedInventoryItem(e) {
+      e.preventDefault();
+      const it = state.inventory.find(i => i.id === editingInvId);
+      if (!it) return;
+      it.image = document.getElementById('editInvImage').value.trim();
+      it.sku = document.getElementById('editInvSku').value.trim();
+      it.category = document.getElementById('editInvCategory').value.trim();
+      it.name = document.getElementById('editInvName').value.trim();
+      it.price = parseFloat(document.getElementById('editInvPrice').value || 0);
+      it.stock = parseInt(document.getElementById('editInvStock').value || 0, 10);
+      it.visible = document.getElementById('editInvVisible').value === 'true';
+      persistState();
+      await pushInventoryToBackend(it);
+      renderServicesDropdown();
+      renderCatalog();
+      renderAdminAll();
+      closeEditInventoryModal();
+      showToast('Producto actualizado');
+    }
+
+    function deleteEditingInventoryItem() {
+      state.inventory = state.inventory.filter(i => i.id !== editingInvId);
+      persistState();
+      renderServicesDropdown();
+      renderCatalog();
+      renderAdminAll();
+      closeEditInventoryModal();
+      showToast('Producto eliminado');
+    }
+
+    // VISITAS, CONTABILIDAD Y CARRUSEL
+    function createVisit(e) {
+      e.preventDefault();
+      state.visits.unshift({
+        id: 'VIS-' + Math.floor(100 + Math.random() * 900),
+        client: document.getElementById('visClient').value.trim(),
+        phone: document.getElementById('visPhone').value.trim(),
+        date: document.getElementById('visDate').value.trim(),
+        address: document.getElementById('visAddress').value.trim(),
+        work: document.getElementById('visWork').value.trim(),
+        status: 'Pendiente por visita',
+        diagnosis: '',
+        photos: []
+      });
+      persistState();
+      e.target.reset();
+      renderAdminAll();
+      showToast('Visita agendada');
+    }
+
+    function openVisitModal(id) {
+      const v = state.visits.find(x => x.id === id);
+      if (!v) return;
+      activeVisitId = id;
+      document.getElementById('visModalId').textContent = v.id;
+      document.getElementById('visModalClient').textContent = v.client;
+      document.getElementById('visModalAddress').textContent = v.address;
+      document.getElementById('visModalDate').textContent = v.date;
+      document.getElementById('visModalWork').textContent = v.work;
+      document.getElementById('visModalStatus').value = v.status || 'Pendiente por visita';
+      document.getElementById('visModalDiagnosis').value = v.diagnosis || '';
+      renderVisitPhotos(v);
+      document.getElementById('visitModal').classList.remove('hidden');
+    }
+    function closeVisitModal() { document.getElementById('visitModal').classList.add('hidden'); }
+
+    function handleVisitPhotoUpload(e) {
+      const file = e.target.files?.[0];
+      const v = state.visits.find(x => x.id === activeVisitId);
+      if (!file || !v) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (!Array.isArray(v.photos)) v.photos = [];
+        v.photos.push(String(reader.result || ''));
+        renderVisitPhotos(v);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function renderVisitPhotos(v) {
+      const grid = document.getElementById('visModalPhotosGrid');
+      if (!grid) return;
+      grid.innerHTML = (v.photos || []).map(src => `<img src="${src}" class="w-full h-24 object-cover rounded-xl border border-slate-700" />`).join('');
+    }
+
+    function saveVisitDetails() {
+      const v = state.visits.find(x => x.id === activeVisitId);
+      if (!v) return;
+      v.status = document.getElementById('visModalStatus').value;
+      v.diagnosis = document.getElementById('visModalDiagnosis').value.trim();
+      persistState();
+      renderAdminAll();
+      closeVisitModal();
+      showToast('Visita actualizada');
+    }
+
+    function printVisitReport() { window.print(); }
+    function downloadVisitReport() {
+      const v = state.visits.find(x => x.id === activeVisitId);
+      if (!v) return;
+      const html = `<h1>Comprobante Visita Técnica ${escapeHTML(v.id)}</h1><p>Cliente: ${escapeHTML(v.client)}</p><p>Dirección: ${escapeHTML(v.address)}</p><p>Trabajo: ${escapeHTML(v.work)}</p><p>Diagnóstico: ${escapeHTML(v.diagnosis)}</p>`;
+      const blob = new Blob([html], { type: 'text/html' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `Visita_${v.id}.html`;
+      a.click();
+    }
+
+    function addAccountingEntry(e) {
+      e.preventDefault();
+      state.accounting.unshift({
+        id: 'ACC-' + Date.now(),
+        date: new Date().toLocaleDateString(),
+        type: document.getElementById('accType').value,
+        desc: document.getElementById('accDesc').value.trim(),
+        amount: parseFloat(document.getElementById('accAmount').value || 0)
+      });
+      persistState();
+      e.target.reset();
+      renderAdminAll();
+      showToast('Asiento contable guardado');
+    }
+
+    function addHeroSlide(e) {
+      e.preventDefault();
+      state.slides.push({
+        id: 'SLD-' + Date.now(),
+        badge: document.getElementById('sldBadge').value.trim(),
+        title: document.getElementById('sldTitle').value.trim(),
+        subtitle: document.getElementById('sldSubtitle').value.trim(),
+        image: document.getElementById('sldImage').value.trim()
+      });
+      persistState();
+      e.target.reset();
+      renderHero();
+      renderAdminAll();
+      showToast('Banner publicado');
+    }
+
+    function removeHeroSlide(idx) {
+      if (state.slides.length <= 1) return;
+      state.slides.splice(idx, 1);
+      currentSlideIdx = 0;
+      persistState();
+      renderHero();
+      renderAdminAll();
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      syncAdminSessionUI();
+      syncRateDisplays();
+      renderServicesDropdown();
+      renderHero();
+      renderCatalog();
+      renderQuoteCart();
+      fetchLiveBcvRate(false);
+      setInterval(() => fetchLiveBcvRate(false), 300000);
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) fetchLiveBcvRate(false); });
+
+      const hash = window.location.hash || '';
+      if (hash.startsWith('#rastreo=')) {
+        const ticket = decodeURIComponent(hash.replace('#rastreo=', '')).trim();
+        if (ticket) {
+          document.getElementById('trackQueryInput').value = ticket;
+          handlePublicTrack({ preventDefault: () => {} });
+        }
+      }
+      if (window.location.hash === '#admin' || window.location.pathname === '/admin') {
+        openAdminLoginModal();
+      }
+    });
+  </script>
+</body>
+</html>
